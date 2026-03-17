@@ -1,3 +1,12 @@
+// @title           FlowPay API
+// @version         1.0
+// @description     FlowPay payment platform API
+// @host            localhost:8080
+// @BasePath        /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and your JWT token
 package main
 
 import (
@@ -7,6 +16,7 @@ import (
 	"flowpay-be/internal/database"
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
+	_ "flowpay-be/docs"
 	"fmt"
 	"log"
 	"os"

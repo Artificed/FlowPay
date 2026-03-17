@@ -5,6 +5,8 @@ import (
 	"flowpay-be/internal/api/middleware"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Handlers struct {
@@ -13,6 +15,10 @@ type Handlers struct {
 
 func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
 	r := gin.Default()
+
+	if gin.Mode() != gin.ReleaseMode {
+		r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	v1 := r.Group("/api/v1")
 	{

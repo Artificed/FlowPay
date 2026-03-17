@@ -1,0 +1,179 @@
+basePath: /api/v1
+definitions:
+  handler.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.registerRequest:
+    properties:
+      display_name:
+        type: string
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    type: object
+  models.User:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      wallet:
+        $ref: '#/definitions/models.Wallet'
+    type: object
+  models.Wallet:
+    properties:
+      balances:
+        items:
+          $ref: '#/definitions/models.WalletBalance'
+        type: array
+      created_at:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/models.WalletStatus'
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+  models.WalletBalance:
+    properties:
+      available_amount:
+        type: integer
+      created_at:
+        type: string
+      currency:
+        description: ISO 4217
+        type: string
+      id:
+        type: string
+      total_amount:
+        type: integer
+      updated_at:
+        type: string
+      wallet:
+        $ref: '#/definitions/models.Wallet'
+      wallet_id:
+        type: string
+    type: object
+  models.WalletStatus:
+    enum:
+    - active
+    - suspended
+    - closed
+    type: string
+    x-enum-varnames:
+    - WalletStatusActive
+    - WalletStatusSuspended
+    - WalletStatusClosed
+  service.AuthResult:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: FlowPay payment platform API
+  title: FlowPay API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.AuthResult'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/service.AuthResult'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and your JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
