@@ -1,0 +1,6 @@
+tmp
+vendor
+*.md
+.git
+.gitignore
+.air.toml
