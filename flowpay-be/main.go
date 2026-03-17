@@ -1,17 +1,23 @@
 package main
 
 import (
+	"flowpay-be/internal/api"
+	"flowpay-be/internal/api/handler"
 	"flowpay-be/internal/config"
 	"flowpay-be/internal/database"
+	"flowpay-be/internal/repository"
+	"flowpay-be/internal/service"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	cfg := config.Load()
+
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET env var is required")
+	}
 
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
@@ -22,12 +28,13 @@ func main() {
 		log.Fatalf("database: migrations failed: %v", err)
 	}
 
-	_ = db
+	userRepo := repository.NewUserRepository(db)
+	authService := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
+	authHandler := handler.NewAuthHandler(authService)
 
-	router := gin.Default()
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
-	})
+	router := api.NewRouter(api.Handlers{
+		Auth: authHandler,
+	}, cfg.JWTSecret)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	log.Printf("server: listening on %s", addr)

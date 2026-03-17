@@ -3,11 +3,14 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Config struct {
-	DatabaseURL string
-	Port        string
+	DatabaseURL      string
+	Port             string
+	JWTSecret        string
+	JWTExpiryHours   int
 }
 
 func Load() *Config {
@@ -22,9 +25,13 @@ func Load() *Config {
 		host, port, name, user, password,
 	)
 
+	jwtExpiry, _ := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
+
 	return &Config{
-		DatabaseURL: dsn,
-		Port:        getEnv("PORT", "8080"),
+		DatabaseURL:    dsn,
+		Port:           getEnv("PORT", "8080"),
+		JWTSecret:      getEnv("JWT_SECRET", ""),
+		JWTExpiryHours: jwtExpiry,
 	}
 }
 
