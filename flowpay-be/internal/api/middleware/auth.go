@@ -19,7 +19,6 @@ func Auth(jwtSecret string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid authorization header"})
 			return
 		}
-
 		tokenStr := strings.TrimPrefix(header, "Bearer ")
 		claims := &service.Claims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {

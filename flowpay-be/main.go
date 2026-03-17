@@ -6,17 +6,17 @@
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-// @description Type "Bearer" followed by a space and your JWT token
+// @description Enter: **Bearer &lt;your token&gt;**
 package main
 
 import (
+	_ "flowpay-be/docs"
 	"flowpay-be/internal/api"
 	"flowpay-be/internal/api/handler"
 	"flowpay-be/internal/config"
 	"flowpay-be/internal/database"
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
-	_ "flowpay-be/docs"
 	"fmt"
 	"log"
 	"os"
@@ -39,11 +39,19 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db)
-	authService := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
-	authHandler := handler.NewAuthHandler(authService)
+	walletRepo := repository.NewWalletRepository(db)
+	balanceRepo := repository.NewWalletBalanceRepository(db)
+	holdRepo := repository.NewWalletHoldRepository(db)
+	txRepo := repository.NewTransactionRepository(db)
+
+	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
+	walletSvc := service.NewWalletService(walletRepo)
+	transferSvc := service.NewTransferService(db, walletRepo, balanceRepo, holdRepo, txRepo)
 
 	router := api.NewRouter(api.Handlers{
-		Auth: authHandler,
+		Auth:     handler.NewAuthHandler(authSvc),
+		Wallet:   handler.NewWalletHandler(walletSvc),
+		Transfer: handler.NewTransferHandler(transferSvc, walletSvc),
 	}, cfg.JWTSecret)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
