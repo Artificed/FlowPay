@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +18,7 @@ func main() {
 		log.Fatalf("database: connect failed: %v", err)
 	}
 
-	if err := database.RunMigrations(pgURL(), "file://internal/database/migrations"); err != nil {
+	if err := database.RunMigrations(pgURL()); err != nil {
 		log.Fatalf("database: migrations failed: %v", err)
 	}
 
