@@ -14,6 +14,7 @@ type Handlers struct {
 	Auth     *handler.AuthHandler
 	Wallet   *handler.WalletHandler
 	Transfer *handler.TransferHandler
+	Health   *handler.HealthHandler
 }
 
 func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
@@ -25,6 +26,8 @@ func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
+
+	r.GET("/health", handlers.Health.Health)
 
 	if gin.Mode() != gin.ReleaseMode {
 		r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
