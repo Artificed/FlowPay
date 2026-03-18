@@ -12,6 +12,7 @@ type TransactionRepository interface {
 	Create(ctx context.Context, tx *gorm.DB, transaction *models.Transaction) error
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Transaction, error)
 	ListByWallet(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
+	CountByWallet(ctx context.Context, walletID uuid.UUID) (int64, error)
 	UpdateStatus(ctx context.Context, tx *gorm.DB, id uuid.UUID, status models.TransactionStatus) error
 }
 
@@ -52,6 +53,16 @@ func (r *transactionRepository) ListByWallet(ctx context.Context, walletID uuid.
 		return nil, err
 	}
 	return transactions, nil
+}
+
+func (r *transactionRepository) CountByWallet(ctx context.Context, walletID uuid.UUID) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&models.Transaction{}).
+		Where("sender_wallet_id = ? OR recipient_wallet_id = ?", walletID, walletID).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r *transactionRepository) UpdateStatus(ctx context.Context, tx *gorm.DB, id uuid.UUID, status models.TransactionStatus) error {

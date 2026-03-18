@@ -82,15 +82,15 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 // @Tags         transfers
 // @Produce      json
 // @Security     BearerAuth
-// @Param        limit  query int false "Page size (default 20)"
+// @Param        limit  query int false "Page size (default 10, max 100)"
 // @Param        offset query int false "Offset (default 0)"
-// @Success      200 {array} models.Transaction
+// @Success      200 {object} map[string]interface{}
 // @Failure      401 {object} map[string]string
 // @Router       /transfers [get]
 func (h *TransferHandler) ListTransfers(c *gin.Context) {
 	userID := c.MustGet(middleware.UserIDKey).(uuid.UUID)
 
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	if limit > 100 {
 		limit = 100
@@ -108,7 +108,13 @@ func (h *TransferHandler) ListTransfers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	total, err := h.transferSvc.CountTransactions(c.Request.Context(), wallet.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count transactions"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": transactions, "total": total})
 }
 
 // ReverseTransfer godoc
