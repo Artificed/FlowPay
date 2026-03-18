@@ -32,6 +32,8 @@ func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
 
 	v1 := r.Group("/api/v1")
 	{
+		v1.GET("/currencies", handler.GetCurrencies)
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", handlers.Auth.Register)
@@ -41,6 +43,7 @@ func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
 		protected := v1.Group("/", middleware.Auth(jwtSecret))
 		{
 			protected.GET("/wallet", handlers.Wallet.GetWallet)
+			protected.POST("/wallet/deposit", handlers.Wallet.Deposit)
 
 			protected.POST("/transfers", handlers.Transfer.CreateTransfer)
 			protected.GET("/transfers", handlers.Transfer.ListTransfers)

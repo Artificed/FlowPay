@@ -45,7 +45,7 @@ func main() {
 	txRepo := repository.NewTransactionRepository(db)
 
 	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
-	walletSvc := service.NewWalletService(walletRepo)
+	walletSvc := service.NewWalletService(db, walletRepo, balanceRepo)
 	transferSvc := service.NewTransferService(db, walletRepo, balanceRepo, holdRepo, txRepo)
 
 	router := api.NewRouter(api.Handlers{
