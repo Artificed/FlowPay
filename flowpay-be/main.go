@@ -10,6 +10,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	_ "flowpay-be/docs"
 	"flowpay-be/internal/api"
 	"flowpay-be/internal/api/handler"
@@ -19,7 +21,11 @@ import (
 	"flowpay-be/internal/service"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -52,13 +58,30 @@ func main() {
 		Auth:     handler.NewAuthHandler(authSvc),
 		Wallet:   handler.NewWalletHandler(walletSvc),
 		Transfer: handler.NewTransferHandler(transferSvc, walletSvc),
+		Health:   handler.NewHealthHandler(db),
 	}, cfg.JWTSecret)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	log.Printf("server: listening on %s", addr)
-	if err := router.Run(addr); err != nil {
-		log.Fatalf("server: %v", err)
+	srv := &http.Server{Addr: addr, Handler: router}
+
+	go func() {
+		log.Printf("server: listening on %s", addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("server: shutting down")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("server: forced shutdown: %v", err)
 	}
+	log.Println("server: stopped")
 }
 
 func pgURL() string {
