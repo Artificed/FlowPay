@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react"
 import { ArrowUpRight, ArrowDownLeft, Copy, Check, Zap, SendHorizonal } from "lucide-react"
 import { useAuth } from "@/providers/AuthProvider"
 import { walletService } from "@/features/wallet"
-import { transferService } from "@/features/transfer"
+import { transferService, streamTransactions } from "@/features/transfer"
 import type { Wallet } from "@/features/wallet"
 import type { Transaction } from "@/features/transfer"
 import { Button } from "@/components/ui/button"
@@ -75,7 +75,40 @@ export default function DashboardPage() {
   const [showSend, setShowSend] = useState(false)
   const [showDeposit, setShowDeposit] = useState(false)
 
-  const load = useCallback(async () => {
+  useEffect(() => {
+    walletService
+      .getWallet()
+      .then(setWallet)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load wallet"))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    streamTransactions({
+      signal: ctrl.signal,
+      onSnapshot(txns) {
+        setTransactions(txns)
+        setLoading(false)
+      },
+      onTransactionUpdate(updated) {
+        setTransactions((prev) => {
+          const exists = prev.some((t) => t.id === updated.id)
+          if (exists) return prev.map((t) => (t.id === updated.id ? updated : t))
+          return [updated, ...prev]
+        })
+      },
+      onWalletUpdate(w) {
+        setWallet(w)
+      },
+      onError(err) {
+        console.error("SSE error:", err)
+      },
+    })
+    return () => ctrl.abort()
+  }, [])
+
+  const reload = useCallback(async () => {
     try {
       setError(null)
       const [w, txns] = await Promise.all([
@@ -86,14 +119,8 @@ export default function DashboardPage() {
       setTransactions(txns)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard")
-    } finally {
-      setLoading(false)
     }
   }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   const activeBalance = wallet?.Balances[activeCurrency]
 
@@ -143,7 +170,7 @@ export default function DashboardPage() {
               <Button
                 variant="outline"
                 className="h-9 rounded-full border-white/10 bg-white/5 px-5 text-sm text-white hover:bg-white/10"
-                onClick={load}
+                onClick={reload}
               >
                 Retry
               </Button>
@@ -176,8 +203,8 @@ export default function DashboardPage() {
                 key={b.id}
                 onClick={() => setActiveCurrency(i)}
                 className={`rounded-full px-3.5 py-1 text-xs font-medium transition-all ${i === activeCurrency
-                    ? "bg-white text-zinc-950"
-                    : "border border-white/8 bg-white/4 text-zinc-400 hover:bg-white/8"
+                  ? "bg-white text-zinc-950"
+                  : "border border-white/8 bg-white/4 text-zinc-400 hover:bg-white/8"
                   }`}
               >
                 {b.currency}
@@ -245,8 +272,8 @@ export default function DashboardPage() {
                   >
                     <div
                       className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isOutgoing
-                          ? "bg-zinc-800 text-zinc-400"
-                          : "bg-emerald-500/10 text-emerald-400"
+                        ? "bg-zinc-800 text-zinc-400"
+                        : "bg-emerald-500/10 text-emerald-400"
                         }`}
                     >
                       {isOutgoing ? (
@@ -291,10 +318,10 @@ export default function DashboardPage() {
       </main>
 
       {showSend && (
-        <SendMoneyModal onClose={() => setShowSend(false)} onSuccess={load} />
+        <SendMoneyModal onClose={() => setShowSend(false)} onSuccess={reload} />
       )}
       {showDeposit && (
-        <AddFundsModal onClose={() => setShowDeposit(false)} onSuccess={load} />
+        <AddFundsModal onClose={() => setShowDeposit(false)} onSuccess={reload} />
       )}
     </div>
   )

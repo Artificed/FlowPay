@@ -3,10 +3,13 @@ package handler
 import (
 	"errors"
 	"flowpay-be/internal/api/middleware"
+	"flowpay-be/internal/models"
 	"flowpay-be/internal/service"
 	"net/http"
 	"strconv"
+	"time"
 
+	sse "github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -152,6 +155,86 @@ func (h *TransferHandler) ReverseTransfer(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, txn)
+}
+
+// StreamTransactions godoc
+// @Summary      Stream transaction updates via SSE
+// @Tags         transfers
+// @Produce      text/event-stream
+// @Security     BearerAuth
+// @Success      200 {string} string "SSE stream"
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Router       /transfers/stream [get]
+func (h *TransferHandler) StreamTransactions(c *gin.Context) {
+	userID := c.MustGet(middleware.UserIDKey).(uuid.UUID)
+
+	wallet, err := h.walletSvc.GetWallet(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "wallet not found"})
+		return
+	}
+	walletID := wallet.ID
+
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "streaming not supported"})
+		return
+	}
+
+	initial, err := h.transferSvc.ListTransactions(c.Request.Context(), walletID, 50, 0)
+	if err != nil {
+		sse.Encode(c.Writer, sse.Event{Event: "error", Data: "failed to load transactions"})
+		flusher.Flush()
+		return
+	}
+	sse.Encode(c.Writer, sse.Event{Event: "snapshot", Data: initial})
+	flusher.Flush()
+
+	seen := make(map[uuid.UUID]time.Time, len(initial))
+	for _, t := range initial {
+		seen[t.ID] = t.UpdatedAt
+	}
+
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	ctx := c.Request.Context()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			txns, err := h.transferSvc.ListTransactions(ctx, walletID, 50, 0)
+			if err != nil {
+				continue
+			}
+
+			walletDirty := false
+			for _, t := range txns {
+				prev, exists := seen[t.ID]
+				if !exists || t.UpdatedAt.After(prev) {
+					seen[t.ID] = t.UpdatedAt
+					sse.Encode(c.Writer, sse.Event{Event: "transaction_update", Data: t})
+					if t.Status == models.TransactionStatusCompleted ||
+						t.Status == models.TransactionStatusReversed {
+						walletDirty = true
+					}
+				}
+			}
+			if walletDirty {
+				if updatedWallet, err := h.walletSvc.GetWallet(ctx, userID); err == nil {
+					sse.Encode(c.Writer, sse.Event{Event: "wallet_update", Data: updatedWallet})
+				}
+			}
+			flusher.Flush()
+		}
+	}
 }
 
 // GetTransfer godoc
