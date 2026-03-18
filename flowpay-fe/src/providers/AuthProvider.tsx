@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
 import type { AuthResult, User } from "@/features/auth/types"
-import { setAuthToken } from "@/lib/http"
 
 type AuthContextValue = {
   user: User | null
@@ -21,10 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem(USER_KEY)
     return stored ? (JSON.parse(stored) as User) : null
   })
-
-  useEffect(() => {
-    setAuthToken(token)
-  }, [token])
 
   const login = useCallback((result: AuthResult) => {
     localStorage.setItem(TOKEN_KEY, result.token)
