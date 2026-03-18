@@ -25,7 +25,10 @@ func Load() *Config {
 		host, port, name, user, password,
 	)
 
-	jwtExpiry, _ := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
+	jwtExpiry, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
+	if err != nil {
+		jwtExpiry = 24
+	}
 
 	return &Config{
 		DatabaseURL:    dsn,

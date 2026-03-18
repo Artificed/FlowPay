@@ -163,6 +163,8 @@ func (s *transferService) ListTransactions(ctx context.Context, walletID uuid.UU
 
 func generateReferenceCode() string {
 	b := make([]byte, 3)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		panic(fmt.Sprintf("crypto/rand failed: %v", err))
+	}
 	return fmt.Sprintf("FP-%s-%X", time.Now().UTC().Format("20060102"), b)
 }
