@@ -108,6 +108,52 @@ func (h *TransferHandler) ListTransfers(c *gin.Context) {
 	c.JSON(http.StatusOK, transactions)
 }
 
+// ReverseTransfer godoc
+// @Summary      Reverse a completed transfer
+// @Tags         transfers
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id path string true "Transaction ID"
+// @Success      200 {object} models.Transaction
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      403 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Failure      422 {object} map[string]string
+// @Router       /transfers/{id}/reverse [post]
+func (h *TransferHandler) ReverseTransfer(c *gin.Context) {
+	userID := c.MustGet(middleware.UserIDKey).(uuid.UUID)
+
+	txID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		return
+	}
+
+	wallet, err := h.walletSvc.GetWallet(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "wallet not found"})
+		return
+	}
+
+	txn, err := h.transferSvc.ReverseTransfer(c.Request.Context(), txID, wallet.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrNotTransactionSender):
+			c.JSON(http.StatusForbidden, gin.H{"error": "only the sender can reverse a transaction"})
+		case errors.Is(err, service.ErrTransactionNotReversible):
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "transaction cannot be reversed"})
+		case errors.Is(err, service.ErrInsufficientFundsForReversal):
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "recipient has insufficient funds to reverse this transaction"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "reversal failed"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, txn)
+}
+
 // GetTransfer godoc
 // @Summary      Get a transaction by ID
 // @Tags         transfers

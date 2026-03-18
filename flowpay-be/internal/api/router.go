@@ -48,6 +48,7 @@ func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
 			protected.POST("/transfers", handlers.Transfer.CreateTransfer)
 			protected.GET("/transfers", handlers.Transfer.ListTransfers)
 			protected.GET("/transfers/:id", handlers.Transfer.GetTransfer)
+			protected.POST("/transfers/:id/reverse", handlers.Transfer.ReverseTransfer)
 		}
 	}
 

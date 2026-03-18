@@ -15,10 +15,13 @@ import (
 )
 
 var (
-	ErrInsufficientFunds   = errors.New("insufficient funds")
-	ErrSelfTransfer        = errors.New("cannot transfer to yourself")
-	ErrInvalidAmount       = errors.New("amount must be greater than zero")
-	ErrUnsupportedCurrency = errors.New("unsupported currency")
+	ErrInsufficientFunds            = errors.New("insufficient funds")
+	ErrSelfTransfer                 = errors.New("cannot transfer to yourself")
+	ErrInvalidAmount                = errors.New("amount must be greater than zero")
+	ErrUnsupportedCurrency          = errors.New("unsupported currency")
+	ErrTransactionNotReversible     = errors.New("transaction cannot be reversed")
+	ErrNotTransactionSender         = errors.New("only the sender can reverse a transaction")
+	ErrInsufficientFundsForReversal = errors.New("recipient has insufficient funds to reverse this transaction")
 )
 
 type TransferInput struct {
@@ -41,6 +44,7 @@ type TransferService interface {
 	HoldFunds(ctx context.Context, txnID uuid.UUID) error
 	DebitSender(ctx context.Context, txnID uuid.UUID) error
 	CreditRecipient(ctx context.Context, txnID uuid.UUID) error
+	ReverseTransfer(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) (*models.Transaction, error)
 	GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error)
 	ListTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
 }
@@ -223,6 +227,68 @@ func (s *transferService) CreditRecipient(ctx context.Context, txnID uuid.UUID) 
 
 		return s.txRepo.UpdateStatus(ctx, tx, txnID, models.TransactionStatusCompleted)
 	})
+}
+
+func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) (*models.Transaction, error) {
+	txn, err := s.txRepo.FindByID(ctx, txnID)
+	if err != nil {
+		return nil, fmt.Errorf("transaction not found: %w", err)
+	}
+
+	if txn.SenderWalletID != requesterWalletID {
+		return nil, ErrNotTransactionSender
+	}
+
+	// Idempotent: already reversed
+	if txn.Status == models.TransactionStatusReversed {
+		return txn, nil
+	}
+
+	if txn.Status != models.TransactionStatusCompleted {
+		return nil, ErrTransactionNotReversible
+	}
+
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		recipientBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, txn.RecipientWalletID, txn.Currency)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrInsufficientFundsForReversal
+			}
+			return err
+		}
+
+		if recipientBalance.TotalAmount < txn.Amount || recipientBalance.AvailableAmount < txn.Amount {
+			return ErrInsufficientFundsForReversal
+		}
+
+		if err := s.balanceRepo.UpdateAmounts(ctx, tx, recipientBalance.ID, -txn.Amount, -txn.Amount); err != nil {
+			return err
+		}
+
+		senderBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, txn.SenderWalletID, txn.Currency)
+		if err != nil {
+			return err
+		}
+
+		if err := s.balanceRepo.UpdateAmounts(ctx, tx, senderBalance.ID, txn.Amount, txn.Amount); err != nil {
+			return err
+		}
+
+		hold, err := s.holdRepo.FindByTransactionID(ctx, txnID)
+		if err == nil && hold != nil {
+			if err := s.holdRepo.UpdateStatus(ctx, tx, hold.ID, models.HoldStatusReleased); err != nil {
+				return err
+			}
+		}
+
+		return s.txRepo.UpdateStatus(ctx, tx, txnID, models.TransactionStatusReversed)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	txn.Status = models.TransactionStatusReversed
+	return txn, nil
 }
 
 func (s *transferService) GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error) {
