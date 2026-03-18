@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 const schema = z.object({
-  amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount"),
+  amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount").refine((v) => parseFloat(v) > 0, "Amount must be greater than zero"),
   currency: z.string().min(1, "Select a currency"),
 })
 
@@ -23,7 +23,7 @@ type Props = {
 
 export default function AddFundsModal({ onClose, onSuccess }: Props) {
   const [serverError, setServerError] = useState<string | null>(null)
-  const currencies = useCurrencies()
+  const { currencies, currencyError } = useCurrencies()
 
   const {
     register,
@@ -92,9 +92,9 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
             )}
           </div>
 
-          {serverError && (
+          {(serverError || currencyError) && (
             <p className="bg-destructive/10 text-destructive rounded-lg px-3 py-2.5 text-sm">
-              {serverError}
+              {serverError || currencyError}
             </p>
           )}
 

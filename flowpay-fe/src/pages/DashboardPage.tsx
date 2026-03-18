@@ -70,19 +70,22 @@ export default function DashboardPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeCurrency, setActiveCurrency] = useState(0)
   const [showSend, setShowSend] = useState(false)
   const [showDeposit, setShowDeposit] = useState(false)
 
   const load = useCallback(async () => {
     try {
+      setError(null)
       const [w, txns] = await Promise.all([
         walletService.getWallet(),
         transferService.listTransfers({ limit: 20 }),
       ])
       setWallet(w)
       setTransactions(txns)
-    } catch {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load dashboard")
     } finally {
       setLoading(false)
     }
@@ -134,7 +137,18 @@ export default function DashboardPage() {
             {getGreeting()}, {user?.display_name.split(" ")[0]}
           </p>
 
-          {loading ? (
+          {error ? (
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <p className="text-sm text-red-400">{error}</p>
+              <Button
+                variant="outline"
+                className="h-9 rounded-full border-white/10 bg-white/5 px-5 text-sm text-white hover:bg-white/10"
+                onClick={load}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : loading ? (
             <div className="mt-4 flex flex-col items-center gap-3">
               <div className="h-16 w-64 animate-pulse rounded-xl bg-white/5" />
               <div className="h-4 w-32 animate-pulse rounded-lg bg-white/5" />
