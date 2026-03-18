@@ -7,6 +7,7 @@ import (
 	"flowpay-be/internal/currency"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/repository"
+	"flowpay-be/internal/reqctx"
 	"fmt"
 	"time"
 
@@ -134,6 +135,7 @@ func (s *transferService) ValidateTransfer(ctx context.Context, input TransferIn
 func (s *transferService) CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error) {
 	txn := &models.Transaction{
 		ReferenceCode:     generateReferenceCode(),
+		CorrelationID:     reqctx.GetRequestID(ctx),
 		SenderWalletID:    senderWalletID,
 		RecipientWalletID: input.RecipientWalletID,
 		Amount:            input.Amount,
