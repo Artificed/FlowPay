@@ -29,8 +29,18 @@ type TransferInput struct {
 	Note              string
 }
 
+type TransferValidation struct {
+	SenderWalletID    uuid.UUID
+	RecipientWalletID uuid.UUID
+}
+
 type TransferService interface {
 	Transfer(ctx context.Context, input TransferInput) (*models.Transaction, error)
+	ValidateTransfer(ctx context.Context, input TransferInput) (*TransferValidation, error)
+	CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error)
+	HoldFunds(ctx context.Context, txnID uuid.UUID) error
+	DebitSender(ctx context.Context, txnID uuid.UUID) error
+	CreditRecipient(ctx context.Context, txnID uuid.UUID) error
 	GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error)
 	ListTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
 }
@@ -60,6 +70,36 @@ func NewTransferService(
 }
 
 func (s *transferService) Transfer(ctx context.Context, input TransferInput) (*models.Transaction, error) {
+	validation, err := s.ValidateTransfer(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	txn, err := s.CreateTransaction(ctx, input, validation.SenderWalletID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.HoldFunds(ctx, txn.ID); err != nil {
+		_ = s.txRepo.UpdateStatus(ctx, nil, txn.ID, models.TransactionStatusFailed)
+		return nil, err
+	}
+
+	if err := s.DebitSender(ctx, txn.ID); err != nil {
+		_ = s.txRepo.UpdateStatus(ctx, nil, txn.ID, models.TransactionStatusFailed)
+		return nil, err
+	}
+
+	if err := s.CreditRecipient(ctx, txn.ID); err != nil {
+		_ = s.txRepo.UpdateStatus(ctx, nil, txn.ID, models.TransactionStatusFailed)
+		return nil, err
+	}
+
+	txn.Status = models.TransactionStatusCompleted
+	return txn, nil
+}
+
+func (s *transferService) ValidateTransfer(ctx context.Context, input TransferInput) (*TransferValidation, error) {
 	if input.Amount <= 0 {
 		return nil, ErrInvalidAmount
 	}
@@ -76,14 +116,44 @@ func (s *transferService) Transfer(ctx context.Context, input TransferInput) (*m
 		return nil, ErrSelfTransfer
 	}
 
-	_, err = s.walletRepo.FindByID(ctx, input.RecipientWalletID)
-	if err != nil {
+	if _, err = s.walletRepo.FindByID(ctx, input.RecipientWalletID); err != nil {
 		return nil, fmt.Errorf("recipient wallet not found: %w", err)
 	}
 
-	var txn *models.Transaction
-	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		senderBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, senderWallet.ID, input.Currency)
+	return &TransferValidation{
+		SenderWalletID:    senderWallet.ID,
+		RecipientWalletID: input.RecipientWalletID,
+	}, nil
+}
+
+func (s *transferService) CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error) {
+	txn := &models.Transaction{
+		ReferenceCode:     generateReferenceCode(),
+		SenderWalletID:    senderWalletID,
+		RecipientWalletID: input.RecipientWalletID,
+		Amount:            input.Amount,
+		Currency:          input.Currency,
+		Note:              input.Note,
+		Status:            models.TransactionStatusPending,
+	}
+	if err := s.txRepo.Create(ctx, nil, txn); err != nil {
+		return nil, err
+	}
+	return txn, nil
+}
+
+func (s *transferService) HoldFunds(ctx context.Context, txnID uuid.UUID) error {
+	if existing, err := s.holdRepo.FindByTransactionID(ctx, txnID); err == nil && existing != nil {
+		return nil
+	}
+
+	txn, err := s.txRepo.FindByID(ctx, txnID)
+	if err != nil {
+		return fmt.Errorf("transaction not found: %w", err)
+	}
+
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		senderBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, txn.SenderWalletID, txn.Currency)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrInsufficientFunds
@@ -91,59 +161,68 @@ func (s *transferService) Transfer(ctx context.Context, input TransferInput) (*m
 			return err
 		}
 
-		if senderBalance.AvailableAmount < input.Amount {
+		if senderBalance.AvailableAmount < txn.Amount {
 			return ErrInsufficientFunds
-		}
-
-		txn = &models.Transaction{
-			ReferenceCode:     generateReferenceCode(),
-			SenderWalletID:    senderWallet.ID,
-			RecipientWalletID: input.RecipientWalletID,
-			Amount:            input.Amount,
-			Currency:          input.Currency,
-			Note:              input.Note,
-			Status:            models.TransactionStatusProcessing,
-		}
-		if err := s.txRepo.Create(ctx, tx, txn); err != nil {
-			return err
 		}
 
 		hold := &models.WalletHold{
 			WalletBalanceID: senderBalance.ID,
-			TransactionID:   txn.ID,
-			Amount:          input.Amount,
+			TransactionID:   txnID,
+			Amount:          txn.Amount,
 			Status:          models.HoldStatusPending,
 		}
 		if err := s.holdRepo.Create(ctx, tx, hold); err != nil {
 			return err
 		}
-		if err := s.balanceRepo.UpdateAmounts(ctx, tx, senderBalance.ID, 0, -input.Amount); err != nil {
+
+		if err := s.balanceRepo.UpdateAmounts(ctx, tx, senderBalance.ID, 0, -txn.Amount); err != nil {
 			return err
 		}
 
-		if err := s.balanceRepo.UpdateAmounts(ctx, tx, senderBalance.ID, -input.Amount, 0); err != nil {
-			return err
-		}
-		if err := s.holdRepo.UpdateStatus(ctx, tx, hold.ID, models.HoldStatusSettled); err != nil {
-			return err
-		}
+		return s.txRepo.UpdateStatus(ctx, tx, txnID, models.TransactionStatusProcessing)
+	})
+}
 
-		recipientBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, input.RecipientWalletID, input.Currency)
+func (s *transferService) DebitSender(ctx context.Context, txnID uuid.UUID) error {
+	hold, err := s.holdRepo.FindByTransactionID(ctx, txnID)
+	if err != nil {
+		return fmt.Errorf("hold not found for transaction: %w", err)
+	}
+
+	if hold.Status == models.HoldStatusSettled {
+		return nil
+	}
+
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := s.balanceRepo.UpdateAmounts(ctx, tx, hold.WalletBalanceID, -hold.Amount, 0); err != nil {
+			return err
+		}
+		return s.holdRepo.UpdateStatus(ctx, tx, hold.ID, models.HoldStatusSettled)
+	})
+}
+
+func (s *transferService) CreditRecipient(ctx context.Context, txnID uuid.UUID) error {
+	txn, err := s.txRepo.FindByID(ctx, txnID)
+	if err != nil {
+		return fmt.Errorf("transaction not found: %w", err)
+	}
+
+	if txn.Status == models.TransactionStatusCompleted {
+		return nil
+	}
+
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		recipientBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, txn.RecipientWalletID, txn.Currency)
 		if err != nil {
 			return err
 		}
-		if err := s.balanceRepo.UpdateAmounts(ctx, tx, recipientBalance.ID, input.Amount, input.Amount); err != nil {
+
+		if err := s.balanceRepo.UpdateAmounts(ctx, tx, recipientBalance.ID, txn.Amount, txn.Amount); err != nil {
 			return err
 		}
 
-		return s.txRepo.UpdateStatus(ctx, tx, txn.ID, models.TransactionStatusCompleted)
+		return s.txRepo.UpdateStatus(ctx, tx, txnID, models.TransactionStatusCompleted)
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	txn.Status = models.TransactionStatusCompleted
-	return txn, nil
 }
 
 func (s *transferService) GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error) {

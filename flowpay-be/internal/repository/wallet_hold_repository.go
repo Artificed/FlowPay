@@ -10,6 +10,7 @@ import (
 
 type WalletHoldRepository interface {
 	Create(ctx context.Context, tx *gorm.DB, hold *models.WalletHold) error
+	FindByTransactionID(ctx context.Context, txnID uuid.UUID) (*models.WalletHold, error)
 	UpdateStatus(ctx context.Context, tx *gorm.DB, id uuid.UUID, status models.HoldStatus) error
 }
 
@@ -30,6 +31,14 @@ func (r *walletHoldRepository) conn(tx *gorm.DB) *gorm.DB {
 
 func (r *walletHoldRepository) Create(ctx context.Context, tx *gorm.DB, hold *models.WalletHold) error {
 	return r.conn(tx).WithContext(ctx).Create(hold).Error
+}
+
+func (r *walletHoldRepository) FindByTransactionID(ctx context.Context, txnID uuid.UUID) (*models.WalletHold, error) {
+	var hold models.WalletHold
+	if err := r.db.WithContext(ctx).Where("transaction_id = ?", txnID).First(&hold).Error; err != nil {
+		return nil, err
+	}
+	return &hold, nil
 }
 
 func (r *walletHoldRepository) UpdateStatus(ctx context.Context, tx *gorm.DB, id uuid.UUID, status models.HoldStatus) error {
