@@ -4,7 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -30,6 +30,6 @@ func RunMigrations(databaseURL string) error {
 		return fmt.Errorf("migrate.Up: %w", err)
 	}
 
-	log.Println("database: migrations applied")
+	slog.Info("database: migrations applied")
 	return nil
 }

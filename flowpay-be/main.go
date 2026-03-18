@@ -20,7 +20,7 @@ import (
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,19 +29,24 @@ import (
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	cfg := config.Load()
 
 	if cfg.JWTSecret == "" {
-		log.Fatal("JWT_SECRET env var is required")
+		slog.Error("JWT_SECRET env var is required")
+		os.Exit(1)
 	}
 
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("database: connect failed: %v", err)
+		slog.Error("database: connect failed", "error", err)
+		os.Exit(1)
 	}
 
 	if err := database.RunMigrations(pgURL()); err != nil {
-		log.Fatalf("database: migrations failed: %v", err)
+		slog.Error("database: migrations failed", "error", err)
+		os.Exit(1)
 	}
 
 	userRepo := repository.NewUserRepository(db)
@@ -65,9 +70,10 @@ func main() {
 	srv := &http.Server{Addr: addr, Handler: router}
 
 	go func() {
-		log.Printf("server: listening on %s", addr)
+		slog.Info("server: listening", "addr", addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server: %v", err)
+			slog.Error("server: listen failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -75,13 +81,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("server: shutting down")
+	slog.Info("server: shutting down")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("server: forced shutdown: %v", err)
+		slog.Error("server: forced shutdown", "error", err)
+		os.Exit(1)
 	}
-	log.Println("server: stopped")
+	slog.Info("server: stopped")
 }
 
 func pgURL() string {
