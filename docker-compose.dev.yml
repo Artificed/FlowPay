@@ -16,6 +16,31 @@ services:
       timeout: 5s
       retries: 5
 
+  temporal:
+    image: temporalio/auto-setup:1.25
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD}
+      POSTGRES_SEEDS: postgres
+    ports:
+      - "7233:7233"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  temporal-ui:
+    image: temporalio/ui:2.31.2
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    ports:
+      - "8233:8080"
+    depends_on:
+      - temporal
+
   backend:
     build:
       context: ./flowpay-be
@@ -29,6 +54,7 @@ services:
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      TEMPORAL_ADDRESS: temporal:7233
     ports:
       - "8080:8080"
     volumes:
@@ -37,6 +63,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      temporal:
+        condition: service_started
 
   frontend:
     build:
