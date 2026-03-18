@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"flowpay-be/internal/currency"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/repository"
 	"fmt"
@@ -14,9 +15,10 @@ import (
 )
 
 var (
-	ErrInsufficientFunds = errors.New("insufficient funds")
-	ErrSelfTransfer      = errors.New("cannot transfer to yourself")
-	ErrInvalidAmount     = errors.New("amount must be greater than zero")
+	ErrInsufficientFunds   = errors.New("insufficient funds")
+	ErrSelfTransfer        = errors.New("cannot transfer to yourself")
+	ErrInvalidAmount       = errors.New("amount must be greater than zero")
+	ErrUnsupportedCurrency = errors.New("unsupported currency")
 )
 
 type TransferInput struct {
@@ -60,6 +62,9 @@ func NewTransferService(
 func (s *transferService) Transfer(ctx context.Context, input TransferInput) (*models.Transaction, error) {
 	if input.Amount <= 0 {
 		return nil, ErrInvalidAmount
+	}
+	if !currency.IsSupported(input.Currency) {
+		return nil, ErrUnsupportedCurrency
 	}
 
 	senderWallet, err := s.walletRepo.FindByUserID(ctx, input.SenderUserID)
