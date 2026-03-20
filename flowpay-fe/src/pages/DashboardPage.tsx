@@ -152,7 +152,7 @@ export default function DashboardPage() {
     }
   }, [fetchPage])
 
-  const activeBalance = wallet?.Balances[activeCurrency]
+  const activeBalance = wallet?.balances[activeCurrency]
 
   return (
     <div className="relative min-h-svh bg-zinc-950">
@@ -228,7 +228,7 @@ export default function DashboardPage() {
           )}
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            {wallet?.Balances.map((b, i) => (
+            {wallet?.balances.map((b, i) => (
               <button
                 key={b.id}
                 onClick={() => setActiveCurrency(i)}

@@ -16,7 +16,7 @@ export type WalletBalance = {
 export type Wallet = {
   id: string
   user_id: string
-  Balances: WalletBalance[]
+  balances: WalletBalance[]
   created_at: string
   updated_at: string
 }
