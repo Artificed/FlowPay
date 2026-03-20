@@ -18,6 +18,7 @@ func NewWorker(c client.Client, transferSvc service.TransferService) worker.Work
 
 	activities := NewActivities(transferSvc)
 	w.RegisterWorkflow(TransferWorkflow)
+	w.RegisterWorkflow(ReverseTransferWorkflow)
 	w.RegisterActivity(activities)
 
 	return w

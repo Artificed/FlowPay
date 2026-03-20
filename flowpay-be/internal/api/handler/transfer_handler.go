@@ -184,18 +184,48 @@ func (h *TransferHandler) ReverseTransfer(c *gin.Context) {
 		return
 	}
 
-	txn, err := h.transferSvc.ReverseTransfer(c.Request.Context(), txID, wallet.ID)
+	input := temporalworker.ReverseTransferWorkflowInput{
+		TransactionID:     txID,
+		RequesterWalletID: wallet.ID,
+	}
+
+	we, err := h.temporalClient.ExecuteWorkflow(
+		c.Request.Context(),
+		client.StartWorkflowOptions{
+			ID:        "reverse-" + txID.String(),
+			TaskQueue: temporalworker.TaskQueue,
+		},
+		temporalworker.ReverseTransferWorkflow,
+		input,
+	)
 	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrNotTransactionSender):
-			c.JSON(http.StatusForbidden, gin.H{"error": "only the sender can reverse a transaction"})
-		case errors.Is(err, service.ErrTransactionNotReversible):
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "transaction cannot be reversed"})
-		case errors.Is(err, service.ErrInsufficientFundsForReversal):
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "recipient has insufficient funds to reverse this transaction"})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "reversal failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start reversal"})
+		return
+	}
+
+	var result temporalworker.ReverseTransferWorkflowResult
+	if err := we.Get(c.Request.Context(), &result); err != nil {
+		var appErr *temporalerr.ApplicationError
+		if errors.As(err, &appErr) {
+			switch appErr.Type() {
+			case service.ErrNotTransactionSender.Error():
+				c.JSON(http.StatusForbidden, gin.H{"error": "only the sender can reverse a transaction"})
+			case service.ErrTransactionNotReversible.Error():
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "transaction cannot be reversed"})
+			case service.ErrInsufficientFundsForReversal.Error():
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "recipient has insufficient funds to reverse this transaction"})
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "reversal failed"})
+			}
+			return
 		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "reversal failed"})
+		return
+	}
+
+	txn, err := h.transferSvc.GetTransaction(c.Request.Context(), result.TransactionID, wallet.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "reversal completed but failed to fetch transaction"})
 		return
 	}
 

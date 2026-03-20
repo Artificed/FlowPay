@@ -19,6 +19,15 @@ type TransferWorkflowResult struct {
 	TransactionID uuid.UUID
 }
 
+type ReverseTransferWorkflowInput struct {
+	TransactionID     uuid.UUID
+	RequesterWalletID uuid.UUID
+}
+
+type ReverseTransferWorkflowResult struct {
+	TransactionID uuid.UUID
+}
+
 var activityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 30 * time.Second,
 	RetryPolicy: &temporal.RetryPolicy{
@@ -59,4 +68,16 @@ func TransferWorkflow(ctx workflow.Context, input TransferWorkflowInput) (*Trans
 	}
 
 	return &TransferWorkflowResult{TransactionID: txnID}, nil
+}
+
+func ReverseTransferWorkflow(ctx workflow.Context, input ReverseTransferWorkflowInput) (*ReverseTransferWorkflowResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, activityOptions)
+
+	var a *Activities
+
+	if err := workflow.ExecuteActivity(ctx, a.CompensateTransferActivity, input.TransactionID, input.RequesterWalletID).Get(ctx, nil); err != nil {
+		return nil, err
+	}
+
+	return &ReverseTransferWorkflowResult{TransactionID: input.TransactionID}, nil
 }
