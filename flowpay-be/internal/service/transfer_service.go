@@ -19,7 +19,6 @@ var (
 	ErrInsufficientFunds            = errors.New("insufficient funds")
 	ErrSelfTransfer                 = errors.New("cannot transfer to yourself")
 	ErrInvalidAmount                = errors.New("amount must be greater than zero")
-	ErrUnsupportedCurrency          = errors.New("unsupported currency")
 	ErrTransactionNotReversible     = errors.New("transaction cannot be reversed")
 	ErrNotTransactionSender         = errors.New("only the sender can reverse a transaction")
 	ErrInsufficientFundsForReversal = errors.New("recipient has insufficient funds to reverse this transaction")
@@ -81,7 +80,7 @@ func (s *transferService) ValidateTransfer(ctx context.Context, input TransferIn
 		return nil, ErrInvalidAmount
 	}
 	if !currency.IsSupported(input.Currency) {
-		return nil, ErrUnsupportedCurrency
+		return nil, currency.ErrUnsupportedCurrency
 	}
 
 	senderWallet, err := s.walletRepo.FindByUserID(ctx, input.SenderUserID)

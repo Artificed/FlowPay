@@ -72,7 +72,7 @@ func (h *WalletHandler) Deposit(c *gin.Context) {
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUnsupportedCurrency):
+		case errors.Is(err, currency.ErrUnsupportedCurrency):
 			c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported currency"})
 		case errors.Is(err, service.ErrInvalidDepositAmount):
 			c.JSON(http.StatusBadRequest, gin.H{"error": "amount must be greater than zero"})

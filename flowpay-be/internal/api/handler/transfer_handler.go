@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"flowpay-be/internal/api/middleware"
+	"flowpay-be/internal/currency"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/service"
 	temporalworker "flowpay-be/internal/temporal"
@@ -103,7 +104,7 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "cannot transfer to yourself"})
 			case service.ErrInvalidAmount.Error():
 				c.JSON(http.StatusBadRequest, gin.H{"error": "amount must be greater than zero"})
-			case service.ErrUnsupportedCurrency.Error():
+			case currency.ErrUnsupportedCurrency.Error():
 				c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported currency"})
 			default:
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "transfer failed"})

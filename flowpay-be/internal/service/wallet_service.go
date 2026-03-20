@@ -43,7 +43,7 @@ func (s *walletService) Deposit(ctx context.Context, input DepositInput) (*model
 		return nil, ErrInvalidDepositAmount
 	}
 	if !currency.IsSupported(input.Currency) {
-		return nil, ErrUnsupportedCurrency
+		return nil, currency.ErrUnsupportedCurrency
 	}
 
 	wallet, err := s.walletRepo.FindByUserID(ctx, input.UserID)

@@ -3,6 +3,7 @@ package temporal
 import (
 	"context"
 	"errors"
+	"flowpay-be/internal/currency"
 	"flowpay-be/internal/service"
 
 	"github.com/google/uuid"
@@ -63,7 +64,7 @@ func wrapBusinessError(err error) error {
 		service.ErrInsufficientFunds,
 		service.ErrSelfTransfer,
 		service.ErrInvalidAmount,
-		service.ErrUnsupportedCurrency,
+		currency.ErrUnsupportedCurrency,
 		service.ErrTransactionNotReversible,
 		service.ErrNotTransactionSender,
 		service.ErrInsufficientFundsForReversal,

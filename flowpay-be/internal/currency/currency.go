@@ -1,6 +1,11 @@
 package currency
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrUnsupportedCurrency = errors.New("unsupported currency")
 
 var supported = map[string]string{
 	"AED": "UAE Dirham",
