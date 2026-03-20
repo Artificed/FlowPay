@@ -21,7 +21,5 @@ type Transaction struct {
 	Amount            int64             `gorm:"not null"                                 json:"amount"`
 	Currency          string            `gorm:"not null;size:3"                          json:"currency"`
 	Note              string            `gorm:"size:500"                                 json:"note,omitempty"`
-	Status            TransactionStatus `gorm:"not null;default:'pending';size:20;index" json:"status"`
-	SenderWallet      *Wallet           `gorm:"foreignKey:SenderWalletID"`
-	RecipientWallet   *Wallet           `gorm:"foreignKey:RecipientWalletID"`
+	Status TransactionStatus `gorm:"not null;default:'pending';size:20;index" json:"status"`
 }
