@@ -45,7 +45,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := database.RunMigrations(pgURL()); err != nil {
+	if err := database.RunMigrations(cfg.MigrationURL()); err != nil {
 		slog.Error("database: migrations failed", "error", err)
 		os.Exit(1)
 	}
@@ -106,22 +106,4 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("server: stopped")
-}
-
-func pgURL() string {
-	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		envOr("DB_USER", "flowpay"),
-		envOr("DB_PASSWORD", "flowpay"),
-		envOr("DB_HOST", "localhost"),
-		envOr("DB_PORT", "5432"),
-		envOr("DB_NAME", "flowpay"),
-	)
-}
-
-func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }

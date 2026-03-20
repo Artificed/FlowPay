@@ -12,6 +12,7 @@ type Config struct {
 	JWTSecret       string
 	JWTExpiryHours  int
 	TemporalAddress string
+	migrationURL    string
 }
 
 func Load() *Config {
@@ -37,7 +38,15 @@ func Load() *Config {
 		JWTSecret:       getEnv("JWT_SECRET", ""),
 		JWTExpiryHours:  jwtExpiry,
 		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
+		migrationURL: fmt.Sprintf(
+			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+			user, password, host, port, name,
+		),
 	}
+}
+
+func (c *Config) MigrationURL() string {
+	return c.migrationURL
 }
 
 func getEnv(key, fallback string) string {
