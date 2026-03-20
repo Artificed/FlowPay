@@ -5,6 +5,7 @@ import (
 	"flowpay-be/internal/api/middleware"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/service"
+	temporalworker "flowpay-be/internal/temporal"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,15 +13,18 @@ import (
 	sse "github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.temporal.io/sdk/client"
+	temporalerr "go.temporal.io/sdk/temporal"
 )
 
 type TransferHandler struct {
-	transferSvc service.TransferService
-	walletSvc   service.WalletService
+	transferSvc    service.TransferService
+	walletSvc      service.WalletService
+	temporalClient client.Client
 }
 
-func NewTransferHandler(transferSvc service.TransferService, walletSvc service.WalletService) *TransferHandler {
-	return &TransferHandler{transferSvc: transferSvc, walletSvc: walletSvc}
+func NewTransferHandler(transferSvc service.TransferService, walletSvc service.WalletService, temporalClient client.Client) *TransferHandler {
+	return &TransferHandler{transferSvc: transferSvc, walletSvc: walletSvc, temporalClient: temporalClient}
 }
 
 type transferRequest struct {
@@ -51,26 +55,61 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 		return
 	}
 
-	txn, err := h.transferSvc.Transfer(c.Request.Context(), service.TransferInput{
-		SenderUserID:      userID,
-		RecipientWalletID: req.RecipientWalletID,
-		Amount:            req.Amount,
-		Currency:          req.Currency,
-		Note:              req.Note,
-	})
+	input := temporalworker.TransferWorkflowInput{
+		Input: service.TransferInput{
+			SenderUserID:      userID,
+			RecipientWalletID: req.RecipientWalletID,
+			Amount:            req.Amount,
+			Currency:          req.Currency,
+			Note:              req.Note,
+		},
+	}
+
+	we, err := h.temporalClient.ExecuteWorkflow(
+		c.Request.Context(),
+		client.StartWorkflowOptions{
+			ID:        "transfer-" + uuid.New().String(),
+			TaskQueue: temporalworker.TaskQueue,
+		},
+		temporalworker.TransferWorkflow,
+		input,
+	)
 	if err != nil {
-		switch {
-		case errors.Is(err, service.ErrInsufficientFunds):
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "insufficient funds"})
-		case errors.Is(err, service.ErrSelfTransfer):
-			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot transfer to yourself"})
-		case errors.Is(err, service.ErrInvalidAmount):
-			c.JSON(http.StatusBadRequest, gin.H{"error": "amount must be greater than zero"})
-		case errors.Is(err, service.ErrUnsupportedCurrency):
-			c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported currency"})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "transfer failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start transfer"})
+		return
+	}
+
+	var result temporalworker.TransferWorkflowResult
+	if err := we.Get(c.Request.Context(), &result); err != nil {
+		var appErr *temporalerr.ApplicationError
+		if errors.As(err, &appErr) {
+			switch appErr.Type() {
+			case service.ErrInsufficientFunds.Error():
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "insufficient funds"})
+			case service.ErrSelfTransfer.Error():
+				c.JSON(http.StatusBadRequest, gin.H{"error": "cannot transfer to yourself"})
+			case service.ErrInvalidAmount.Error():
+				c.JSON(http.StatusBadRequest, gin.H{"error": "amount must be greater than zero"})
+			case service.ErrUnsupportedCurrency.Error():
+				c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported currency"})
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "transfer failed"})
+			}
+			return
 		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "transfer failed"})
+		return
+	}
+
+	wallet, err := h.walletSvc.GetWallet(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "transfer completed but failed to fetch wallet"})
+		return
+	}
+
+	txn, err := h.transferSvc.GetTransaction(c.Request.Context(), result.TransactionID, wallet.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "transfer completed but failed to fetch transaction"})
 		return
 	}
 

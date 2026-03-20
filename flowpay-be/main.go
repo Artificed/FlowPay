@@ -19,6 +19,7 @@ import (
 	"flowpay-be/internal/database"
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
+	temporalworker "flowpay-be/internal/temporal"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -59,10 +60,23 @@ func main() {
 	walletSvc := service.NewWalletService(db, walletRepo, balanceRepo)
 	transferSvc := service.NewTransferService(db, walletRepo, balanceRepo, holdRepo, txRepo)
 
+	temporalClient, err := temporalworker.NewClient(cfg.TemporalAddress)
+	if err != nil {
+		slog.Error("temporal: connect failed", "error", err)
+		os.Exit(1)
+	}
+	defer temporalClient.Close()
+
+	worker := temporalworker.NewWorker(temporalClient, transferSvc)
+	if err := worker.Start(); err != nil {
+		slog.Error("temporal: worker start failed", "error", err)
+		os.Exit(1)
+	}
+
 	router := api.NewRouter(api.Handlers{
 		Auth:     handler.NewAuthHandler(authSvc),
 		Wallet:   handler.NewWalletHandler(walletSvc),
-		Transfer: handler.NewTransferHandler(transferSvc, walletSvc),
+		Transfer: handler.NewTransferHandler(transferSvc, walletSvc, temporalClient),
 		Health:   handler.NewHealthHandler(db),
 	}, cfg.JWTSecret)
 
@@ -82,6 +96,9 @@ func main() {
 	<-quit
 
 	slog.Info("server: shutting down")
+
+	worker.Stop()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
