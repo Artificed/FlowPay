@@ -86,7 +86,6 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*AuthR
 		}
 		wallet := &models.Wallet{
 			UserID: user.ID,
-			Status: models.WalletStatusActive,
 		}
 		return tx.Create(wallet).Error
 	})

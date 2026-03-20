@@ -3,8 +3,6 @@ export type SupportedCurrency = {
   name: string
 }
 
-export type WalletStatus = "active" | "suspended" | "closed"
-
 export type WalletBalance = {
   id: string
   wallet_id: string
@@ -18,7 +16,6 @@ export type WalletBalance = {
 export type Wallet = {
   id: string
   user_id: string
-  status: WalletStatus
   Balances: WalletBalance[]
   created_at: string
   updated_at: string
