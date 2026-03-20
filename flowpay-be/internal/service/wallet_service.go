@@ -64,7 +64,5 @@ func (s *walletService) Deposit(ctx context.Context, input DepositInput) (*model
 		return nil, err
 	}
 
-	balance.TotalAmount += input.Amount
-	balance.AvailableAmount += input.Amount
-	return balance, nil
+	return s.balanceRepo.FindOrCreate(ctx, s.db, wallet.ID, input.Currency)
 }

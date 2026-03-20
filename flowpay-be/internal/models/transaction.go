@@ -15,7 +15,7 @@ const (
 type Transaction struct {
 	Base
 	ReferenceCode     string            `gorm:"uniqueIndex;not null;size:64"             json:"reference_code"`
-	CorrelationID     string            `gorm:"not null;default:'';size:36"              json:"correlation_id,omitempty"` // "FP-20260317-0042"
+	CorrelationID     string            `gorm:"not null;default:'';size:36"              json:"correlation_id,omitempty"`
 	SenderWalletID    uuid.UUID         `gorm:"type:uuid;not null;index"                 json:"sender_wallet_id"`
 	RecipientWalletID uuid.UUID         `gorm:"type:uuid;not null;index"                 json:"recipient_wallet_id"`
 	Amount            int64             `gorm:"not null"                                 json:"amount"`
