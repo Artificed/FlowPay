@@ -22,10 +22,9 @@ type TransferWorkflowResult struct {
 var activityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 30 * time.Second,
 	RetryPolicy: &temporal.RetryPolicy{
-		MaximumAttempts:        3,
-		InitialInterval:        time.Second,
-		BackoffCoefficient:     2.0,
-		NonRetryableErrorTypes: []string{"non_retryable"},
+		MaximumAttempts:    3,
+		InitialInterval:    time.Second,
+		BackoffCoefficient: 2.0,
 	},
 }
 
