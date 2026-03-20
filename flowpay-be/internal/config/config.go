@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	DatabaseURL      string
-	Port             string
-	JWTSecret        string
-	JWTExpiryHours   int
+	DatabaseURL     string
+	Port            string
+	JWTSecret       string
+	JWTExpiryHours  int
+	TemporalAddress string
 }
 
 func Load() *Config {
@@ -31,10 +32,11 @@ func Load() *Config {
 	}
 
 	return &Config{
-		DatabaseURL:    dsn,
-		Port:           getEnv("PORT", "8080"),
-		JWTSecret:      getEnv("JWT_SECRET", ""),
-		JWTExpiryHours: jwtExpiry,
+		DatabaseURL:     dsn,
+		Port:            getEnv("PORT", "8080"),
+		JWTSecret:       getEnv("JWT_SECRET", ""),
+		JWTExpiryHours:  jwtExpiry,
+		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "localhost:7233"),
 	}
 }
 
