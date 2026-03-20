@@ -78,7 +78,7 @@ func main() {
 		Wallet:   handler.NewWalletHandler(walletSvc),
 		Transfer: handler.NewTransferHandler(transferSvc, walletSvc, temporalClient),
 		Health:   handler.NewHealthHandler(db),
-	}, cfg.JWTSecret)
+	}, cfg.JWTSecret, cfg.CORSOrigins)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	srv := &http.Server{Addr: addr, Handler: router}

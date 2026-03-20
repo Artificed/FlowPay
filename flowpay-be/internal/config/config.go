@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -12,6 +13,7 @@ type Config struct {
 	JWTSecret       string
 	JWTExpiryHours  int
 	TemporalAddress string
+	CORSOrigins     []string
 	migrationURL    string
 }
 
@@ -32,12 +34,15 @@ func Load() *Config {
 		jwtExpiry = 24
 	}
 
+	corsOrigins := strings.Split(getEnv("CORS_ORIGINS", "http://localhost:5173,http://localhost"), ",")
+
 	return &Config{
 		DatabaseURL:     dsn,
 		Port:            getEnv("PORT", "8080"),
 		JWTSecret:       getEnv("JWT_SECRET", ""),
 		JWTExpiryHours:  jwtExpiry,
 		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
+		CORSOrigins:     corsOrigins,
 		migrationURL: fmt.Sprintf(
 			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 			user, password, host, port, name,

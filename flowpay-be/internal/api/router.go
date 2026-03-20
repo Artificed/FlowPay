@@ -17,12 +17,12 @@ type Handlers struct {
 	Health   *handler.HealthHandler
 }
 
-func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
+func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(middleware.RequestID())
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost"},
+		AllowOrigins:     corsOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", middleware.RequestIDHeader, "Idempotency-Key"},
 		ExposeHeaders:    []string{middleware.RequestIDHeader},
