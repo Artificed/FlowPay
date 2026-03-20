@@ -39,12 +39,12 @@ type TransferValidation struct {
 }
 
 type TransferService interface {
-	Transfer(ctx context.Context, input TransferInput) (*models.Transaction, error)
 	ValidateTransfer(ctx context.Context, input TransferInput) (*TransferValidation, error)
 	CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error)
 	HoldFunds(ctx context.Context, txnID uuid.UUID) error
 	DebitSender(ctx context.Context, txnID uuid.UUID) error
 	CreditRecipient(ctx context.Context, txnID uuid.UUID) error
+	MarkTransactionFailed(ctx context.Context, txnID uuid.UUID) error
 	ReverseTransfer(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) (*models.Transaction, error)
 	GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error)
 	ListTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
@@ -75,35 +75,6 @@ func NewTransferService(
 	}
 }
 
-func (s *transferService) Transfer(ctx context.Context, input TransferInput) (*models.Transaction, error) {
-	validation, err := s.ValidateTransfer(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	txn, err := s.CreateTransaction(ctx, input, validation.SenderWalletID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.HoldFunds(ctx, txn.ID); err != nil {
-		_ = s.txRepo.UpdateStatus(ctx, nil, txn.ID, models.TransactionStatusFailed)
-		return nil, err
-	}
-
-	if err := s.DebitSender(ctx, txn.ID); err != nil {
-		_ = s.txRepo.UpdateStatus(ctx, nil, txn.ID, models.TransactionStatusFailed)
-		return nil, err
-	}
-
-	if err := s.CreditRecipient(ctx, txn.ID); err != nil {
-		_ = s.txRepo.UpdateStatus(ctx, nil, txn.ID, models.TransactionStatusFailed)
-		return nil, err
-	}
-
-	txn.Status = models.TransactionStatusCompleted
-	return txn, nil
-}
 
 func (s *transferService) ValidateTransfer(ctx context.Context, input TransferInput) (*TransferValidation, error) {
 	if input.Amount <= 0 {
@@ -188,6 +159,10 @@ func (s *transferService) HoldFunds(ctx context.Context, txnID uuid.UUID) error 
 
 		return s.txRepo.UpdateStatus(ctx, tx, txnID, models.TransactionStatusProcessing)
 	})
+}
+
+func (s *transferService) MarkTransactionFailed(ctx context.Context, txnID uuid.UUID) error {
+	return s.txRepo.UpdateStatus(ctx, nil, txnID, models.TransactionStatusFailed)
 }
 
 func (s *transferService) DebitSender(ctx context.Context, txnID uuid.UUID) error {

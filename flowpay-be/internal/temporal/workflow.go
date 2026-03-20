@@ -45,6 +45,7 @@ func TransferWorkflow(ctx workflow.Context, input TransferWorkflowInput) (*Trans
 	}
 
 	if err := workflow.ExecuteActivity(ctx, a.HoldFundsActivity, txnID).Get(ctx, nil); err != nil {
+		_ = workflow.ExecuteActivity(ctx, a.FailTransactionActivity, txnID).Get(ctx, nil)
 		return nil, err
 	}
 

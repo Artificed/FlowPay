@@ -45,6 +45,10 @@ func (a *Activities) CreditRecipientActivity(ctx context.Context, txnID uuid.UUI
 	return wrapBusinessError(a.transferSvc.CreditRecipient(ctx, txnID))
 }
 
+func (a *Activities) FailTransactionActivity(ctx context.Context, txnID uuid.UUID) error {
+	return a.transferSvc.MarkTransactionFailed(ctx, txnID)
+}
+
 func (a *Activities) CompensateTransferActivity(ctx context.Context, txnID uuid.UUID, senderWalletID uuid.UUID) error {
 	_, err := a.transferSvc.ReverseTransfer(ctx, txnID, senderWalletID)
 	return wrapBusinessError(err)
