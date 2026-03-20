@@ -36,7 +36,7 @@ func Load() *Config {
 		Port:            getEnv("PORT", "8080"),
 		JWTSecret:       getEnv("JWT_SECRET", ""),
 		JWTExpiryHours:  jwtExpiry,
-		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "localhost:7233"),
+		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
 	}
 }
 
