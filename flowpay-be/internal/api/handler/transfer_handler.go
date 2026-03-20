@@ -13,6 +13,8 @@ import (
 	sse "github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	enumspb "go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	temporalerr "go.temporal.io/sdk/temporal"
 )
@@ -55,6 +57,12 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 		return
 	}
 
+	idempotencyKey := c.GetHeader("Idempotency-Key")
+	if idempotencyKey == "" {
+		idempotencyKey = uuid.New().String()
+	}
+	workflowID := "transfer-" + idempotencyKey
+
 	input := temporalworker.TransferWorkflowInput{
 		Input: service.TransferInput{
 			SenderUserID:      userID,
@@ -68,15 +76,20 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 	we, err := h.temporalClient.ExecuteWorkflow(
 		c.Request.Context(),
 		client.StartWorkflowOptions{
-			ID:        "transfer-" + uuid.New().String(),
-			TaskQueue: temporalworker.TaskQueue,
+			ID:                    workflowID,
+			TaskQueue:             temporalworker.TaskQueue,
+			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
 		},
 		temporalworker.TransferWorkflow,
 		input,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start transfer"})
-		return
+		var alreadyStarted *serviceerror.WorkflowExecutionAlreadyStarted
+		if !errors.As(err, &alreadyStarted) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start transfer"})
+			return
+		}
+		we = h.temporalClient.GetWorkflow(c.Request.Context(), workflowID, "")
 	}
 
 	var result temporalworker.TransferWorkflowResult

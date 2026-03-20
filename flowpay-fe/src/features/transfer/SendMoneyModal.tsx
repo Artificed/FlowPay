@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { X } from "lucide-react"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { transferService } from "./services"
 import { useCurrencies } from "@/features/wallet/useCurrencies"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ type Props = {
 export default function SendMoneyModal({ onClose, onSuccess }: Props) {
   const [serverError, setServerError] = useState<string | null>(null)
   const { currencies, currencyError } = useCurrencies()
+  const idempotencyKey = useRef(crypto.randomUUID())
 
   const {
     register,
@@ -39,12 +40,15 @@ export default function SendMoneyModal({ onClose, onSuccess }: Props) {
   async function onSubmit(data: FormData) {
     setServerError(null)
     try {
-      await transferService.createTransfer({
-        recipient_wallet_id: data.recipient_wallet_id,
-        amount: Math.round(parseFloat(data.amount) * 100),
-        currency: data.currency,
-        note: data.note || undefined,
-      })
+      await transferService.createTransfer(
+        {
+          recipient_wallet_id: data.recipient_wallet_id,
+          amount: Math.round(parseFloat(data.amount) * 100),
+          currency: data.currency,
+          note: data.note || undefined,
+        },
+        idempotencyKey.current,
+      )
       onSuccess()
       onClose()
     } catch (err) {

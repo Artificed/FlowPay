@@ -24,7 +24,7 @@ func NewRouter(handlers Handlers, jwtSecret string) *gin.Engine {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://localhost"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", middleware.RequestIDHeader},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", middleware.RequestIDHeader, "Idempotency-Key"},
 		ExposeHeaders:    []string{middleware.RequestIDHeader},
 		AllowCredentials: true,
 	}))

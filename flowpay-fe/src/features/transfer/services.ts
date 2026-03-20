@@ -9,8 +9,12 @@ export const transferService = {
       .get<{ data: Transaction[]; total: number }>("/api/v1/transfers", { params })
       .then((r) => r.data),
 
-  createTransfer: (body: CreateTransferInput) =>
-    http.post<Transaction>("/api/v1/transfers", body).then((r) => r.data),
+  createTransfer: (body: CreateTransferInput, idempotencyKey: string) =>
+    http
+      .post<Transaction>("/api/v1/transfers", body, {
+        headers: { "Idempotency-Key": idempotencyKey },
+      })
+      .then((r) => r.data),
 
   getTransfer: (id: string) =>
     http.get<Transaction>(`/api/v1/transfers/${id}`).then((r) => r.data),
