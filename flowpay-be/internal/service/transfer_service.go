@@ -242,30 +242,31 @@ func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, 
 		return nil, ErrNotTransactionSender
 	}
 
-	// Idempotent: already reversed
 	if txn.Status == models.TransactionStatusReversed {
 		return txn, nil
 	}
 
-	if txn.Status != models.TransactionStatusCompleted {
+	if txn.Status != models.TransactionStatusCompleted && txn.Status != models.TransactionStatusProcessing {
 		return nil, ErrTransactionNotReversible
 	}
 
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		recipientBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, txn.RecipientWalletID, txn.Currency)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		if txn.Status == models.TransactionStatusCompleted {
+			recipientBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, txn.RecipientWalletID, txn.Currency)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return ErrInsufficientFundsForReversal
+				}
+				return err
+			}
+
+			if recipientBalance.TotalAmount < txn.Amount || recipientBalance.AvailableAmount < txn.Amount {
 				return ErrInsufficientFundsForReversal
 			}
-			return err
-		}
 
-		if recipientBalance.TotalAmount < txn.Amount || recipientBalance.AvailableAmount < txn.Amount {
-			return ErrInsufficientFundsForReversal
-		}
-
-		if err := s.balanceRepo.UpdateAmounts(ctx, tx, recipientBalance.ID, -txn.Amount, -txn.Amount); err != nil {
-			return err
+			if err := s.balanceRepo.UpdateAmounts(ctx, tx, recipientBalance.ID, -txn.Amount, -txn.Amount); err != nil {
+				return err
+			}
 		}
 
 		senderBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, txn.SenderWalletID, txn.Currency)
