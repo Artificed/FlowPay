@@ -308,13 +308,16 @@ func (h *TransferHandler) StreamTransactions(c *gin.Context) {
 			for _, t := range txns {
 				prev, exists := seen[t.ID]
 				if !exists || t.UpdatedAt.After(prev) {
-					seen[t.ID] = t.UpdatedAt
 					sse.Encode(c.Writer, sse.Event{Event: "transaction_update", Data: t})
 					if t.Status == models.TransactionStatusCompleted ||
 						t.Status == models.TransactionStatusReversed {
 						walletDirty = true
 					}
 				}
+			}
+			seen = make(map[uuid.UUID]time.Time, len(txns))
+			for _, t := range txns {
+				seen[t.ID] = t.UpdatedAt
 			}
 			if walletDirty {
 				if updatedWallet, err := h.walletSvc.GetWallet(ctx, userID); err == nil {
