@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { X } from "lucide-react"
@@ -28,6 +28,7 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -76,17 +77,25 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
 
           <div className="space-y-2">
             <Label htmlFor="currency">Currency</Label>
-            <select
-              id="currency"
-              className="h-10 w-full rounded-md border border-white/10 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-              {...register("currency")}
-            >
-              {currencies.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code} — {c.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="currency"
+              control={control}
+              render={({ field }) => (
+                <select
+                  id="currency"
+                  className="h-10 w-full rounded-md border border-white/10 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                >
+                  {currencies.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
             {errors.currency && (
               <p className="text-destructive text-xs">{errors.currency.message}</p>
             )}
