@@ -102,8 +102,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      temporal:
-        condition: service_healthy
+      temporal-create-namespace:
+        condition: service_completed_successfully
 
   frontend:
     build:
