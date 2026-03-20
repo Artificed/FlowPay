@@ -21,6 +21,12 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("flowpay_token")
+      localStorage.removeItem("flowpay_user")
+      window.location.href = "/"
+      return Promise.reject(new Error("Session expired"))
+    }
     const message = err.response?.data?.error ?? err.message ?? "Request failed"
     return Promise.reject(new Error(message))
   }
