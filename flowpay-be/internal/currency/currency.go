@@ -3,6 +3,7 @@ package currency
 import (
 	"errors"
 	"fmt"
+	"sort"
 )
 
 var ErrUnsupportedCurrency = errors.New("unsupported currency")
@@ -55,6 +56,9 @@ func All() []Currency {
 	for code, name := range supported {
 		result = append(result, Currency{Code: code, Name: name})
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Code < result[j].Code
+	})
 	return result
 }
 
