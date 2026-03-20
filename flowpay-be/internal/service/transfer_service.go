@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -103,20 +104,31 @@ func (s *transferService) ValidateTransfer(ctx context.Context, input TransferIn
 }
 
 func (s *transferService) CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error) {
-	txn := &models.Transaction{
-		ReferenceCode:     generateReferenceCode(),
-		CorrelationID:     reqctx.GetRequestID(ctx),
-		SenderWalletID:    senderWalletID,
-		RecipientWalletID: input.RecipientWalletID,
-		Amount:            input.Amount,
-		Currency:          input.Currency,
-		Note:              input.Note,
-		Status:            models.TransactionStatusPending,
+	for range 3 {
+		txn := &models.Transaction{
+			ReferenceCode:     generateReferenceCode(),
+			CorrelationID:     reqctx.GetRequestID(ctx),
+			SenderWalletID:    senderWalletID,
+			RecipientWalletID: input.RecipientWalletID,
+			Amount:            input.Amount,
+			Currency:          input.Currency,
+			Note:              input.Note,
+			Status:            models.TransactionStatusPending,
+		}
+		err := s.txRepo.Create(ctx, nil, txn)
+		if err == nil {
+			return txn, nil
+		}
+		if !isUniqueViolation(err) {
+			return nil, err
+		}
 	}
-	if err := s.txRepo.Create(ctx, nil, txn); err != nil {
-		return nil, err
-	}
-	return txn, nil
+	return nil, fmt.Errorf("failed to generate unique reference code after 3 attempts")
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }
 
 func (s *transferService) HoldFunds(ctx context.Context, txnID uuid.UUID) error {
@@ -289,7 +301,7 @@ func (s *transferService) CountTransactions(ctx context.Context, walletID uuid.U
 }
 
 func generateReferenceCode() string {
-	b := make([]byte, 3)
+	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
 		panic(fmt.Sprintf("crypto/rand failed: %v", err))
 	}
