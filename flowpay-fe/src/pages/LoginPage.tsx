@@ -48,7 +48,7 @@ export default function LoginPage() {
         <p className="text-muted-foreground text-sm">Enter your credentials to continue</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
