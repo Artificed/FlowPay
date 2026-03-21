@@ -108,12 +108,13 @@ func (s *transferService) CreateTransaction(ctx context.Context, input TransferI
 		txn := &models.Transaction{
 			ReferenceCode:     generateReferenceCode(),
 			CorrelationID:     reqctx.GetRequestID(ctx),
-			SenderWalletID:    senderWalletID,
+			SenderWalletID:    &senderWalletID,
 			RecipientWalletID: input.RecipientWalletID,
 			Amount:            input.Amount,
 			Currency:          input.Currency,
 			Note:              input.Note,
 			Status:            models.TransactionStatusPending,
+			Type:              models.TransactionTypeTransfer,
 		}
 		err := s.txRepo.Create(ctx, nil, txn)
 		if err == nil {
@@ -142,7 +143,7 @@ func (s *transferService) HoldFunds(ctx context.Context, txnID uuid.UUID) error 
 	}
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		senderBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, txn.SenderWalletID, txn.Currency)
+		senderBalance, err := s.balanceRepo.LockForUpdate(ctx, tx, *txn.SenderWalletID, txn.Currency)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrInsufficientFunds
@@ -224,7 +225,7 @@ func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, 
 		return nil, fmt.Errorf("transaction not found: %w", err)
 	}
 
-	if txn.SenderWalletID != requesterWalletID {
+	if txn.SenderWalletID == nil || *txn.SenderWalletID != requesterWalletID {
 		return nil, ErrNotTransactionSender
 	}
 
@@ -255,7 +256,7 @@ func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, 
 			}
 		}
 
-		senderBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, txn.SenderWalletID, txn.Currency)
+		senderBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, *txn.SenderWalletID, txn.Currency)
 		if err != nil {
 			return err
 		}
@@ -286,7 +287,7 @@ func (s *transferService) GetTransaction(ctx context.Context, id, walletID uuid.
 	if err != nil {
 		return nil, err
 	}
-	if txn.SenderWalletID != walletID && txn.RecipientWalletID != walletID {
+	if (txn.SenderWalletID == nil || *txn.SenderWalletID != walletID) && txn.RecipientWalletID != walletID {
 		return nil, gorm.ErrRecordNotFound
 	}
 	return txn, nil

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react"
-import { ArrowUpRight, ArrowDownLeft, Copy, Check, Zap, SendHorizonal, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowUpRight, ArrowDownLeft, PlusCircle, Copy, Check, Zap, SendHorizonal, ChevronLeft, ChevronRight } from "lucide-react"
 import { useAuth } from "@/providers/AuthProvider"
 import { walletService } from "@/features/wallet"
 import { transferService, streamTransactions } from "@/features/transfer"
@@ -294,7 +294,8 @@ export default function DashboardPage() {
             <>
               <div className="overflow-hidden rounded-2xl border border-white/5">
                 {transactions.map((txn, i) => {
-                  const isOutgoing = wallet && txn.sender_wallet_id === wallet.id
+                  const isDeposit = txn.type === "deposit"
+                  const isOutgoing = !isDeposit && wallet != null && txn.sender_wallet_id === wallet.id
                   return (
                     <div
                       key={txn.id}
@@ -302,12 +303,16 @@ export default function DashboardPage() {
                         }`}
                     >
                       <div
-                        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isOutgoing
-                          ? "bg-zinc-800 text-zinc-400"
-                          : "bg-emerald-500/10 text-emerald-400"
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isDeposit
+                          ? "bg-indigo-500/10 text-indigo-400"
+                          : isOutgoing
+                            ? "bg-zinc-800 text-zinc-400"
+                            : "bg-emerald-500/10 text-emerald-400"
                           }`}
                       >
-                        {isOutgoing ? (
+                        {isDeposit ? (
+                          <PlusCircle className="size-4" />
+                        ) : isOutgoing ? (
                           <ArrowUpRight className="size-4" />
                         ) : (
                           <ArrowDownLeft className="size-4" />
@@ -316,7 +321,7 @@ export default function DashboardPage() {
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-white">
-                          {txn.note || txn.reference_code}
+                          {isDeposit ? (txn.note || "Deposit") : (txn.note || txn.reference_code)}
                         </p>
                         <p className="mt-0.5 font-mono text-xs text-zinc-600">
                           {txn.reference_code}

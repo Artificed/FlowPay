@@ -46,7 +46,14 @@ func (r *transactionRepository) FindByID(ctx context.Context, id uuid.UUID) (*mo
 func (r *transactionRepository) ListByWallet(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	if err := r.db.WithContext(ctx).
-		Where("sender_wallet_id = ? OR (recipient_wallet_id = ? AND status = ?)", walletID, walletID, models.TransactionStatusCompleted).
+		Where(
+			"sender_wallet_id = ? OR "+
+				"(recipient_wallet_id = ? AND type = ? AND status IN ?) OR "+
+				"(recipient_wallet_id = ? AND type = ?)",
+			walletID,
+			walletID, models.TransactionTypeTransfer, []string{"completed", "reversed"},
+			walletID, models.TransactionTypeDeposit,
+		).
 		Order("created_at DESC").
 		Limit(limit).Offset(offset).
 		Find(&transactions).Error; err != nil {
@@ -58,7 +65,14 @@ func (r *transactionRepository) ListByWallet(ctx context.Context, walletID uuid.
 func (r *transactionRepository) CountByWallet(ctx context.Context, walletID uuid.UUID) (int64, error) {
 	var count int64
 	if err := r.db.WithContext(ctx).Model(&models.Transaction{}).
-		Where("sender_wallet_id = ? OR (recipient_wallet_id = ? AND status = ?)", walletID, walletID, models.TransactionStatusCompleted).
+		Where(
+			"sender_wallet_id = ? OR "+
+				"(recipient_wallet_id = ? AND type = ? AND status IN ?) OR "+
+				"(recipient_wallet_id = ? AND type = ?)",
+			walletID,
+			walletID, models.TransactionTypeTransfer, []string{"completed", "reversed"},
+			walletID, models.TransactionTypeDeposit,
+		).
 		Count(&count).Error; err != nil {
 		return 0, err
 	}

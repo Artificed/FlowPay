@@ -14,6 +14,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+func uuidPtr(id uuid.UUID) *uuid.UUID { return &id }
+
 type mockWalletRepo struct {
 	findByUserIDFn func(uuid.UUID) (*models.Wallet, error)
 	findByIDFn     func(uuid.UUID) (*models.Wallet, error)
@@ -281,7 +283,7 @@ func TestHoldFunds_InsufficientFunds(t *testing.T) {
 	txnID := uuid.New()
 	txn := &models.Transaction{
 		Base:           models.Base{ID: txnID},
-		SenderWalletID: uuid.New(),
+		SenderWalletID: uuidPtr(uuid.New()),
 		Currency:       "USD",
 		Amount:         1000,
 	}
@@ -318,7 +320,7 @@ func TestHoldFunds_Success(t *testing.T) {
 	txnID := uuid.New()
 	txn := &models.Transaction{
 		Base:           models.Base{ID: txnID},
-		SenderWalletID: uuid.New(),
+		SenderWalletID: uuidPtr(uuid.New()),
 		Currency:       "USD",
 		Amount:         500,
 	}
@@ -359,7 +361,7 @@ func TestReverseTransfer_NotSender(t *testing.T) {
 	txnID := uuid.New()
 	txn := &models.Transaction{
 		Base:           models.Base{ID: txnID},
-		SenderWalletID: uuid.New(),
+		SenderWalletID: uuidPtr(uuid.New()),
 		Status:         models.TransactionStatusCompleted,
 	}
 	txRepo := &mockTxRepo{
@@ -377,7 +379,7 @@ func TestReverseTransfer_AlreadyReversed_IsIdempotent(t *testing.T) {
 	walletID := uuid.New()
 	txn := &models.Transaction{
 		Base:           models.Base{ID: txnID},
-		SenderWalletID: walletID,
+		SenderWalletID: &walletID,
 		Status:         models.TransactionStatusReversed,
 	}
 	txRepo := &mockTxRepo{
@@ -403,7 +405,7 @@ func TestReverseTransfer_NotReversible(t *testing.T) {
 			walletID := uuid.New()
 			txn := &models.Transaction{
 				Base:           models.Base{ID: txnID},
-				SenderWalletID: walletID,
+				SenderWalletID: &walletID,
 				Status:         status,
 			}
 			txRepo := &mockTxRepo{
@@ -423,7 +425,7 @@ func TestReverseTransfer_Processing_SkipsRecipientDebit(t *testing.T) {
 	walletID := uuid.New()
 	txn := &models.Transaction{
 		Base:              models.Base{ID: txnID},
-		SenderWalletID:    walletID,
+		SenderWalletID:    &walletID,
 		RecipientWalletID: uuid.New(),
 		Currency:          "USD",
 		Amount:            500,
@@ -481,7 +483,7 @@ func TestReverseTransfer_Completed_InsufficientFundsForReversal(t *testing.T) {
 	walletID := uuid.New()
 	txn := &models.Transaction{
 		Base:              models.Base{ID: txnID},
-		SenderWalletID:    walletID,
+		SenderWalletID:    &walletID,
 		RecipientWalletID: uuid.New(),
 		Currency:          "USD",
 		Amount:            1000,
@@ -517,7 +519,7 @@ func TestReverseTransfer_Completed_Success(t *testing.T) {
 	walletID := uuid.New()
 	txn := &models.Transaction{
 		Base:              models.Base{ID: txnID},
-		SenderWalletID:    walletID,
+		SenderWalletID:    &walletID,
 		RecipientWalletID: uuid.New(),
 		Currency:          "USD",
 		Amount:            500,

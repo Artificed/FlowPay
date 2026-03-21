@@ -57,7 +57,7 @@ func main() {
 	txRepo := repository.NewTransactionRepository(db)
 
 	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
-	walletSvc := service.NewWalletService(db, walletRepo, balanceRepo)
+	walletSvc := service.NewWalletService(db, walletRepo, balanceRepo, txRepo)
 	transferSvc := service.NewTransferService(db, walletRepo, balanceRepo, holdRepo, txRepo)
 
 	temporalClient, err := temporalworker.NewClient(cfg.TemporalAddress)
