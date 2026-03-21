@@ -128,6 +128,16 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 
 ---
 
+## Screenshots
+
+<img width="1920" height="999" alt="FlowPay - Login" src="https://github.com/user-attachments/assets/bf11c2d2-1d46-430d-b2f3-f25ab1a8a0ec" />
+<img width="1920" height="999" alt="FlowPay - Transactions" src="https://github.com/user-attachments/assets/ca20feb6-f43a-4d38-8e72-c2fb9508c55f" />
+<img width="1920" height="998" alt="FlowPay - Transfer" src="https://github.com/user-attachments/assets/f3e9d058-ba3e-48bb-93f3-f5b81cb586e4" />
+<img width="1920" height="999" alt="FlowPay - Workflows" src="https://github.com/user-attachments/assets/a67a5f81-7690-4556-b897-660bd61cb2d0" />
+<img width="1920" height="999" alt="FlowPay - Workflow Detail" src="https://github.com/user-attachments/assets/64f4cc2f-c0a4-44e2-bf71-6cc1b7f7d3de" />
+
+---
+
 ## Usage
 
 1. **Access the Web Dashboard** at `http://localhost:5173`.
