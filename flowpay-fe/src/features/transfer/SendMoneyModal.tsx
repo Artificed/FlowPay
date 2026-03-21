@@ -21,9 +21,10 @@ type FormData = z.infer<typeof schema>
 type Props = {
   onClose: () => void
   onSuccess: () => void
+  onFail?: () => void
 }
 
-export default function SendMoneyModal({ onClose, onSuccess }: Props) {
+export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
   const [serverError, setServerError] = useState<string | null>(null)
   const { currencies, currencyError } = useCurrencies()
   const idempotencyKey = useRef(crypto.randomUUID())
@@ -54,6 +55,7 @@ export default function SendMoneyModal({ onClose, onSuccess }: Props) {
       onClose()
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Transfer failed")
+      onFail?.()
     }
   }
 

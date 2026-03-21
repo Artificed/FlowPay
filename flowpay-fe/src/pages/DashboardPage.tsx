@@ -379,7 +379,7 @@ export default function DashboardPage() {
       </main>
 
       {showSend && (
-        <SendMoneyModal onClose={() => setShowSend(false)} onSuccess={reload} />
+        <SendMoneyModal onClose={() => setShowSend(false)} onSuccess={reload} onFail={() => fetchPage(page)} />
       )}
       {showDeposit && (
         <AddFundsModal onClose={() => setShowDeposit(false)} onSuccess={reload} />

@@ -104,6 +104,8 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "cannot transfer to yourself"})
 			case service.ErrInvalidAmount.Error():
 				c.JSON(http.StatusBadRequest, gin.H{"error": "amount must be greater than zero"})
+			case service.ErrRecipientNotFound.Error():
+				c.JSON(http.StatusBadRequest, gin.H{"error": "recipient wallet not found"})
 			case currency.ErrUnsupportedCurrency.Error():
 				c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported currency"})
 			default:

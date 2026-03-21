@@ -64,6 +64,7 @@ func wrapBusinessError(err error) error {
 		service.ErrInsufficientFunds,
 		service.ErrSelfTransfer,
 		service.ErrInvalidAmount,
+		service.ErrRecipientNotFound,
 		currency.ErrUnsupportedCurrency,
 		service.ErrTransactionNotReversible,
 		service.ErrNotTransactionSender,
