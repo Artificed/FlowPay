@@ -75,7 +75,6 @@ func NewTransferService(
 	}
 }
 
-
 func (s *transferService) ValidateTransfer(ctx context.Context, input TransferInput) (*TransferValidation, error) {
 	if input.Amount <= 0 {
 		return nil, ErrInvalidAmount
@@ -104,27 +103,34 @@ func (s *transferService) ValidateTransfer(ctx context.Context, input TransferIn
 }
 
 func (s *transferService) CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error) {
+	txn := &models.Transaction{
+		CorrelationID:     reqctx.GetRequestID(ctx),
+		SenderWalletID:    &senderWalletID,
+		RecipientWalletID: input.RecipientWalletID,
+		Amount:            input.Amount,
+		Currency:          input.Currency,
+		Note:              input.Note,
+		Status:            models.TransactionStatusPending,
+		Type:              models.TransactionTypeTransfer,
+	}
+	if err := createTxnWithRetry(ctx, nil, s.txRepo, txn); err != nil {
+		return nil, err
+	}
+	return txn, nil
+}
+
+func createTxnWithRetry(ctx context.Context, tx *gorm.DB, repo repository.TransactionRepository, txn *models.Transaction) error {
 	for range 3 {
-		txn := &models.Transaction{
-			ReferenceCode:     generateReferenceCode(),
-			CorrelationID:     reqctx.GetRequestID(ctx),
-			SenderWalletID:    &senderWalletID,
-			RecipientWalletID: input.RecipientWalletID,
-			Amount:            input.Amount,
-			Currency:          input.Currency,
-			Note:              input.Note,
-			Status:            models.TransactionStatusPending,
-			Type:              models.TransactionTypeTransfer,
-		}
-		err := s.txRepo.Create(ctx, nil, txn)
+		txn.ReferenceCode = generateReferenceCode()
+		err := repo.Create(ctx, tx, txn)
 		if err == nil {
-			return txn, nil
+			return nil
 		}
 		if !isUniqueViolation(err) {
-			return nil, err
+			return err
 		}
 	}
-	return nil, fmt.Errorf("failed to generate unique reference code after 3 attempts")
+	return fmt.Errorf("failed to generate unique reference code after 3 attempts")
 }
 
 func isUniqueViolation(err error) bool {
@@ -140,6 +146,9 @@ func (s *transferService) HoldFunds(ctx context.Context, txnID uuid.UUID) error 
 	txn, err := s.txRepo.FindByID(ctx, txnID)
 	if err != nil {
 		return fmt.Errorf("transaction not found: %w", err)
+	}
+	if txn.SenderWalletID == nil {
+		return fmt.Errorf("HoldFunds called on non-transfer transaction %s", txnID)
 	}
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -287,7 +296,8 @@ func (s *transferService) GetTransaction(ctx context.Context, id, walletID uuid.
 	if err != nil {
 		return nil, err
 	}
-	if (txn.SenderWalletID == nil || *txn.SenderWalletID != walletID) && txn.RecipientWalletID != walletID {
+	isSender := txn.SenderWalletID != nil && *txn.SenderWalletID == walletID
+	if !isSender && txn.RecipientWalletID != walletID {
 		return nil, gorm.ErrRecordNotFound
 	}
 	return txn, nil

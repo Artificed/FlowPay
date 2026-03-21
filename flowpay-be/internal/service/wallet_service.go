@@ -7,7 +7,6 @@ import (
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/reqctx"
-	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -65,26 +64,16 @@ func (s *walletService) Deposit(ctx context.Context, input DepositInput) (*model
 			return err
 		}
 
-		for range 3 {
-			depTxn := &models.Transaction{
-				ReferenceCode:     generateReferenceCode(),
-				CorrelationID:     reqctx.GetRequestID(ctx),
-				SenderWalletID:    nil,
-				RecipientWalletID: wallet.ID,
-				Amount:            input.Amount,
-				Currency:          input.Currency,
-				Status:            models.TransactionStatusCompleted,
-				Type:              models.TransactionTypeDeposit,
-			}
-			err := s.txRepo.Create(ctx, tx, depTxn)
-			if err == nil {
-				return nil
-			}
-			if !isUniqueViolation(err) {
-				return err
-			}
+		depTxn := &models.Transaction{
+			CorrelationID:     reqctx.GetRequestID(ctx),
+			SenderWalletID:    nil,
+			RecipientWalletID: wallet.ID,
+			Amount:            input.Amount,
+			Currency:          input.Currency,
+			Status:            models.TransactionStatusCompleted,
+			Type:              models.TransactionTypeDeposit,
 		}
-		return fmt.Errorf("failed to generate unique reference code after 3 attempts")
+		return createTxnWithRetry(ctx, tx, s.txRepo, depTxn)
 	})
 	if err != nil {
 		return nil, err
