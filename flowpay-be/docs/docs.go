@@ -642,7 +642,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "correlation_id": {
-                    "description": "\"FP-20260317-0042\"",
                     "type": "string"
                 },
                 "created_at": {
@@ -657,23 +656,20 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
-                "recipientWallet": {
-                    "$ref": "#/definitions/models.Wallet"
-                },
                 "recipient_wallet_id": {
                     "type": "string"
                 },
                 "reference_code": {
                     "type": "string"
                 },
-                "senderWallet": {
-                    "$ref": "#/definitions/models.Wallet"
-                },
                 "sender_wallet_id": {
                     "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/models.TransactionStatus"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.TransactionType"
                 },
                 "updated_at": {
                     "type": "string"
@@ -697,12 +693,20 @@ const docTemplate = `{
                 "TransactionStatusReversed"
             ]
         },
+        "models.TransactionType": {
+            "type": "string",
+            "enum": [
+                "transfer",
+                "deposit"
+            ],
+            "x-enum-varnames": [
+                "TransactionTypeTransfer",
+                "TransactionTypeDeposit"
+            ]
+        },
         "models.User": {
             "type": "object",
             "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
@@ -741,9 +745,6 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string"
                 },
-                "user": {
-                    "$ref": "#/definitions/models.User"
-                },
                 "user_id": {
                     "type": "string"
                 }
@@ -770,9 +771,6 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
-                },
-                "wallet": {
-                    "$ref": "#/definitions/models.Wallet"
                 },
                 "wallet_id": {
                     "type": "string"

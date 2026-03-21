@@ -61,7 +61,6 @@ definitions:
       amount:
         type: integer
       correlation_id:
-        description: '"FP-20260317-0042"'
         type: string
       created_at:
         type: string
@@ -73,16 +72,14 @@ definitions:
         type: string
       recipient_wallet_id:
         type: string
-      recipientWallet:
-        $ref: '#/definitions/models.Wallet'
       reference_code:
         type: string
       sender_wallet_id:
         type: string
-      senderWallet:
-        $ref: '#/definitions/models.Wallet'
       status:
         $ref: '#/definitions/models.TransactionStatus'
+      type:
+        $ref: '#/definitions/models.TransactionType'
       updated_at:
         type: string
     type: object
@@ -100,10 +97,16 @@ definitions:
     - TransactionStatusCompleted
     - TransactionStatusFailed
     - TransactionStatusReversed
+  models.TransactionType:
+    enum:
+    - transfer
+    - deposit
+    type: string
+    x-enum-varnames:
+    - TransactionTypeTransfer
+    - TransactionTypeDeposit
   models.User:
     properties:
-      avatar_url:
-        type: string
       created_at:
         type: string
       display_name:
@@ -129,8 +132,6 @@ definitions:
         type: string
       updated_at:
         type: string
-      user:
-        $ref: '#/definitions/models.User'
       user_id:
         type: string
     type: object
@@ -149,8 +150,6 @@ definitions:
         type: integer
       updated_at:
         type: string
-      wallet:
-        $ref: '#/definitions/models.Wallet'
       wallet_id:
         type: string
     type: object
