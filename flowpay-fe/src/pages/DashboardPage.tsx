@@ -276,104 +276,96 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {txLoading && (
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-2xl bg-white/4" />
-              ))}
-            </div>
-          )}
-
           {!txLoading && transactions.length === 0 && (
             <div className="rounded-2xl border border-white/5 py-16 text-center">
               <p className="text-sm text-zinc-600">No transactions yet.</p>
             </div>
           )}
 
-          {!txLoading && transactions.length > 0 && (
-            <>
-              <div className="overflow-hidden rounded-2xl border border-white/5">
-                {transactions.map((txn, i) => {
-                  const isDeposit = txn.type === "deposit"
-                  const isOutgoing = !isDeposit && wallet != null && txn.sender_wallet_id === wallet.id
-                  return (
+          {transactions.length > 0 && (
+            <div className={`overflow-hidden rounded-2xl border border-white/5 transition-opacity duration-150 ${txLoading ? "opacity-50 pointer-events-none" : ""}`}>
+              {transactions.map((txn, i) => {
+                const isDeposit = txn.type === "deposit"
+                const isOutgoing = !isDeposit && wallet != null && txn.sender_wallet_id === wallet.id
+                return (
+                  <div
+                    key={txn.id}
+                    className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${i !== transactions.length - 1 ? "border-b border-white/5" : ""
+                      }`}
+                  >
                     <div
-                      key={txn.id}
-                      className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${i !== transactions.length - 1 ? "border-b border-white/5" : ""
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isDeposit
+                        ? "bg-indigo-500/10 text-indigo-400"
+                        : isOutgoing
+                          ? "bg-zinc-800 text-zinc-400"
+                          : "bg-emerald-500/10 text-emerald-400"
                         }`}
                     >
-                      <div
-                        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isDeposit
-                          ? "bg-indigo-500/10 text-indigo-400"
-                          : isOutgoing
-                            ? "bg-zinc-800 text-zinc-400"
-                            : "bg-emerald-500/10 text-emerald-400"
-                          }`}
-                      >
-                        {isDeposit ? (
-                          <PlusCircle className="size-4" />
-                        ) : isOutgoing ? (
-                          <ArrowUpRight className="size-4" />
-                        ) : (
-                          <ArrowDownLeft className="size-4" />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-white">
-                          {isDeposit ? (txn.note || "Deposit") : (txn.note || txn.reference_code)}
-                        </p>
-                        <p className="mt-0.5 font-mono text-xs text-zinc-600">
-                          {txn.reference_code}
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p
-                          className={`text-sm font-medium ${isOutgoing ? "text-zinc-300" : "text-emerald-400"
-                            }`}
-                        >
-                          {isOutgoing ? "−" : "+"}
-                          {formatAmount(txn.amount, txn.currency)}
-                        </p>
-                        <p className="mt-0.5 text-xs text-zinc-600">{formatDate(txn.created_at)}</p>
-                      </div>
-
-                      <span
-                        className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium sm:block ${statusStyles[txn.status] ?? statusStyles.pending
-                          }`}
-                      >
-                        {txn.status}
-                      </span>
+                      {isDeposit ? (
+                        <PlusCircle className="size-4" />
+                      ) : isOutgoing ? (
+                        <ArrowUpRight className="size-4" />
+                      ) : (
+                        <ArrowDownLeft className="size-4" />
+                      )}
                     </div>
-                  )
-                })}
-              </div>
 
-              {total > PAGE_SIZE && (
-                <div className="mt-4 flex justify-center">
-                  <div className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-white/4 p-1">
-                    <button
-                      onClick={() => goToPage(page - 1)}
-                      disabled={page === 0}
-                      className="flex size-7 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-30"
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-white">
+                        {isDeposit ? (txn.note || "Deposit") : (txn.note || txn.reference_code)}
+                      </p>
+                      <p className="mt-0.5 font-mono text-xs text-zinc-600">
+                        {txn.reference_code}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p
+                        className={`text-sm font-medium ${isOutgoing ? "text-zinc-300" : "text-emerald-400"
+                          }`}
+                      >
+                        {isOutgoing ? "−" : "+"}
+                        {formatAmount(txn.amount, txn.currency)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-600">{formatDate(txn.created_at)}</p>
+                    </div>
+
+                    <span
+                      className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium sm:block ${statusStyles[txn.status] ?? statusStyles.pending
+                        }`}
                     >
-                      <ChevronLeft className="size-3.5" />
-                    </button>
-                    <span className="px-3 text-xs text-zinc-500">
-                      {page + 1} / {Math.ceil(total / PAGE_SIZE)}
+                      {txn.status}
                     </span>
-                    <button
-                      onClick={() => goToPage(page + 1)}
-                      disabled={(page + 1) * PAGE_SIZE >= total}
-                      className="flex size-7 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-30"
-                    >
-                      <ChevronRight className="size-3.5" />
-                    </button>
                   </div>
-                </div>
-              )}
-            </>
+                )
+              })}
+            </div>
+          )}
+
+          {total > PAGE_SIZE && (
+            <div className="mt-4 flex justify-center">
+              <div className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-white/4 p-1">
+                <button
+                  type="button"
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page === 0 || txLoading}
+                  className="flex size-7 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronLeft className="size-3.5" />
+                </button>
+                <span className="px-3 text-xs text-zinc-500">
+                  {page + 1} / {Math.ceil(total / PAGE_SIZE)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => goToPage(page + 1)}
+                  disabled={(page + 1) * PAGE_SIZE >= total || txLoading}
+                  className="flex size-7 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronRight className="size-3.5" />
+                </button>
+              </div>
+            </div>
           )}
         </section>
       </main>
