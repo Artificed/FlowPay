@@ -56,7 +56,7 @@ export default function RegisterPage() {
           <Label htmlFor="display_name">Full name</Label>
           <Input
             id="display_name"
-            placeholder="Jane Doe"
+            placeholder="Dummy User"
             autoComplete="name"
             className="h-10"
             {...register("display_name")}
@@ -71,7 +71,7 @@ export default function RegisterPage() {
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="dummy@google.com"
             autoComplete="email"
             className="h-10"
             {...register("email")}

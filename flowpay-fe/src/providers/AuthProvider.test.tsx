@@ -3,7 +3,7 @@ import { render, screen, act } from "@testing-library/react"
 import { AuthProvider, useAuth } from "./AuthProvider"
 import type { AuthResult } from "@/features/auth/types"
 
-const mockUser = { id: "u1", email: "alice@example.com", display_name: "Alice", created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" }
+const mockUser = { id: "u1", email: "dummy@google.com", display_name: "Dummy", created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" }
 const mockResult: AuthResult = { token: "tok-123", user: mockUser }
 
 function TestConsumer() {
@@ -40,7 +40,7 @@ describe("AuthProvider", () => {
     )
 
     expect(screen.getByTestId("auth")).toHaveTextContent("true")
-    expect(screen.getByTestId("user")).toHaveTextContent("Alice")
+    expect(screen.getByTestId("user")).toHaveTextContent("Dummy")
   })
 
   it("login stores token and user in state and localStorage", () => {
@@ -53,9 +53,9 @@ describe("AuthProvider", () => {
     act(() => screen.getByText("Login").click())
 
     expect(screen.getByTestId("auth")).toHaveTextContent("true")
-    expect(screen.getByTestId("user")).toHaveTextContent("Alice")
+    expect(screen.getByTestId("user")).toHaveTextContent("Dummy")
     expect(localStorage.getItem("flowpay_token")).toBe("tok-123")
-    expect(JSON.parse(localStorage.getItem("flowpay_user")!).display_name).toBe("Alice")
+    expect(JSON.parse(localStorage.getItem("flowpay_user")!).display_name).toBe("Dummy")
   })
 
   it("logout clears state and localStorage", () => {

@@ -9,20 +9,20 @@ afterEach(() => mock.reset())
 
 const mockAuthResult = {
   token: "jwt-token",
-  user: { id: "u1", email: "alice@example.com", display_name: "Alice" },
+  user: { id: "u1", email: "dummy@google.com", display_name: "Dummy" },
 }
 
 describe("authService.login", () => {
   it("posts to /api/v1/auth/login and returns auth result", async () => {
     mock.onPost("/api/v1/auth/login").reply(200, mockAuthResult)
 
-    const result = await authService.login({ email: "alice@example.com", password: "password" })
+    const result = await authService.login({ email: "dummy@google.com", password: "password" })
 
     expect(result.token).toBe("jwt-token")
-    expect(result.user.display_name).toBe("Alice")
+    expect(result.user.display_name).toBe("Dummy")
 
     const body = JSON.parse(mock.history.post[0].data)
-    expect(body.email).toBe("alice@example.com")
+    expect(body.email).toBe("dummy@google.com")
     expect(body.password).toBe("password")
   })
 
@@ -40,22 +40,22 @@ describe("authService.register", () => {
     mock.onPost("/api/v1/auth/register").reply(201, mockAuthResult)
 
     const result = await authService.register({
-      email: "alice@example.com",
+      email: "dummy@google.com",
       password: "password123",
-      display_name: "Alice",
+      display_name: "Dummy",
     })
 
     expect(result.token).toBe("jwt-token")
 
     const body = JSON.parse(mock.history.post[0].data)
-    expect(body.display_name).toBe("Alice")
+    expect(body.display_name).toBe("Dummy")
   })
 
   it("propagates conflict error when email is already taken", async () => {
     mock.onPost("/api/v1/auth/register").reply(409, { error: "email already in use" })
 
     await expect(
-      authService.register({ email: "taken@example.com", password: "pass", display_name: "Bob" }),
+      authService.register({ email: "taken@google.com", password: "pass", display_name: "Test" }),
     ).rejects.toThrow("email already in use")
   })
 })

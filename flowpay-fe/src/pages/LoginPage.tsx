@@ -54,7 +54,7 @@ export default function LoginPage() {
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="dummy@google.com"
             autoComplete="email"
             className="h-10"
             {...register("email")}
