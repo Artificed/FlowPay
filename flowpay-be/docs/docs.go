@@ -170,6 +170,160 @@ const docTemplate = `{
                 }
             }
         },
+        "/scheduled-payments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scheduled-payments"
+                ],
+                "summary": "List scheduled payments for current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scheduled-payments"
+                ],
+                "summary": "Create a recurring scheduled payment",
+                "parameters": [
+                    {
+                        "description": "Scheduled payment details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.createScheduledPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.ScheduledPayment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/scheduled-payments/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scheduled-payments"
+                ],
+                "summary": "Cancel a scheduled payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Scheduled Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/transfers": {
             "get": {
                 "security": [
@@ -563,6 +717,36 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.createScheduledPaymentRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "currency",
+                "first_run_at",
+                "interval_days",
+                "recipient_wallet_id"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "first_run_at": {
+                    "type": "string"
+                },
+                "interval_days": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "recipient_wallet_id": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.depositRequest": {
             "type": "object",
             "required": [
@@ -634,6 +818,58 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "models.ScheduledPayment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "interval_days": {
+                    "type": "integer"
+                },
+                "next_run_at": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "recipient_wallet_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.ScheduledPaymentStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "workflow_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ScheduledPaymentStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "cancelled"
+            ],
+            "x-enum-varnames": [
+                "ScheduledPaymentStatusActive",
+                "ScheduledPaymentStatusCancelled"
+            ]
         },
         "models.Transaction": {
             "type": "object",

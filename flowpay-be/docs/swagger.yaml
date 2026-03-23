@@ -7,6 +7,27 @@ definitions:
       name:
         type: string
     type: object
+  handler.createScheduledPaymentRequest:
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+      first_run_at:
+        type: string
+      interval_days:
+        type: integer
+      note:
+        type: string
+      recipient_wallet_id:
+        type: string
+    required:
+    - amount
+    - currency
+    - first_run_at
+    - interval_days
+    - recipient_wallet_id
+    type: object
   handler.depositRequest:
     properties:
       amount:
@@ -56,6 +77,41 @@ definitions:
     - currency
     - recipient_wallet_id
     type: object
+  models.ScheduledPayment:
+    properties:
+      amount:
+        type: integer
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: string
+      interval_days:
+        type: integer
+      next_run_at:
+        type: string
+      note:
+        type: string
+      recipient_wallet_id:
+        type: string
+      status:
+        $ref: '#/definitions/models.ScheduledPaymentStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      workflow_id:
+        type: string
+    type: object
+  models.ScheduledPaymentStatus:
+    enum:
+    - active
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - ScheduledPaymentStatusActive
+    - ScheduledPaymentStatusCancelled
   models.Transaction:
     properties:
       amount:
@@ -267,6 +323,103 @@ paths:
       summary: Health check
       tags:
       - health
+  /scheduled-payments:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List scheduled payments for current user
+      tags:
+      - scheduled-payments
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Scheduled payment details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createScheduledPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ScheduledPayment'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a recurring scheduled payment
+      tags:
+      - scheduled-payments
+  /scheduled-payments/{id}:
+    delete:
+      parameters:
+      - description: Scheduled Payment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cancel a scheduled payment
+      tags:
+      - scheduled-payments
   /transfers:
     get:
       parameters:
