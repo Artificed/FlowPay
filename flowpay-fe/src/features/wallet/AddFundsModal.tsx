@@ -54,7 +54,7 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/8 bg-zinc-900 p-8 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
-          <div>
+          <div className="flex flex-col items-start">
             <h2 className="text-xl font-semibold tracking-tight text-white">Add funds</h2>
             <p className="mt-0.5 text-sm text-zinc-500">Deposit money into your wallet</p>
           </div>

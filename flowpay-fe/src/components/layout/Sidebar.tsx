@@ -18,7 +18,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
 
   const sidebarContent = (
-    <div className="flex h-full w-60 flex-col bg-zinc-950 border-r border-white/5">
+    <div className="flex h-full w-60 flex-col bg-zinc-950/80 backdrop-blur-xl border-r border-white/5">
       <div className="flex h-14 items-center gap-2.5 px-4 border-b border-white/5">
         <div className="flex size-7 items-center justify-center rounded-lg bg-white">
           <Zap className="size-4 fill-zinc-950 text-zinc-950" />
@@ -64,15 +64,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       <div className="hidden md:flex">{sidebarContent}</div>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={onClose}
-          />
-          <div className="absolute left-0 top-0 h-full">{sidebarContent}</div>
+      <div className={`fixed inset-0 z-40 md:hidden transition-all duration-300 ${isOpen ? "visible" : "invisible"}`}>
+        <div
+          className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={onClose}
+        />
+        <div className={`absolute left-0 top-0 h-full transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          {sidebarContent}
         </div>
-      )}
+      </div>
     </>
   )
 }
