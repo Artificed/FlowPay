@@ -14,8 +14,8 @@ const mockWallet = {
 }
 
 describe("walletService.getWallet", () => {
-  it("GET /api/v1/wallet and returns wallet", async () => {
-    mock.onGet("/api/v1/wallet").reply(200, mockWallet)
+  it("GET /api/wallet and returns wallet", async () => {
+    mock.onGet("/api/wallet").reply(200, mockWallet)
 
     const wallet = await walletService.getWallet()
 
@@ -26,9 +26,9 @@ describe("walletService.getWallet", () => {
 })
 
 describe("walletService.deposit", () => {
-  it("POST /api/v1/wallet/deposit with amount and currency", async () => {
+  it("POST /api/wallet/deposit with amount and currency", async () => {
     const mockBalance = { id: "b1", wallet_id: "w1", currency: "USD", total_amount: 15000, available_amount: 15000 }
-    mock.onPost("/api/v1/wallet/deposit").reply(200, mockBalance)
+    mock.onPost("/api/wallet/deposit").reply(200, mockBalance)
 
     const result = await walletService.deposit({ amount: 5000, currency: "USD" })
 
@@ -40,16 +40,16 @@ describe("walletService.deposit", () => {
   })
 
   it("propagates error from server", async () => {
-    mock.onPost("/api/v1/wallet/deposit").reply(400, { error: "unsupported currency" })
+    mock.onPost("/api/wallet/deposit").reply(400, { error: "unsupported currency" })
 
     await expect(walletService.deposit({ amount: 100, currency: "XYZ" })).rejects.toThrow("unsupported currency")
   })
 })
 
 describe("walletService.getCurrencies", () => {
-  it("GET /api/v1/currencies and returns list", async () => {
+  it("GET /api/currencies and returns list", async () => {
     const currencies = [{ code: "USD", name: "US Dollar" }]
-    mock.onGet("/api/v1/currencies").reply(200, currencies)
+    mock.onGet("/api/currencies").reply(200, currencies)
 
     const result = await walletService.getCurrencies()
 

@@ -13,8 +13,8 @@ const mockAuthResult = {
 }
 
 describe("authService.login", () => {
-  it("posts to /api/v1/auth/login and returns auth result", async () => {
-    mock.onPost("/api/v1/auth/login").reply(200, mockAuthResult)
+  it("posts to /api/auth/login and returns auth result", async () => {
+    mock.onPost("/api/auth/login").reply(200, mockAuthResult)
 
     const result = await authService.login({ email: "dummy@google.com", password: "password" })
 
@@ -27,7 +27,7 @@ describe("authService.login", () => {
   })
 
   it("propagates error message from server", async () => {
-    mock.onPost("/api/v1/auth/login").reply(422, { error: "invalid email or password" })
+    mock.onPost("/api/auth/login").reply(422, { error: "invalid email or password" })
 
     await expect(authService.login({ email: "a@b.com", password: "wrong" })).rejects.toThrow(
       "invalid email or password",
@@ -36,8 +36,8 @@ describe("authService.login", () => {
 })
 
 describe("authService.register", () => {
-  it("posts to /api/v1/auth/register and returns auth result", async () => {
-    mock.onPost("/api/v1/auth/register").reply(201, mockAuthResult)
+  it("posts to /api/auth/register and returns auth result", async () => {
+    mock.onPost("/api/auth/register").reply(201, mockAuthResult)
 
     const result = await authService.register({
       email: "dummy@google.com",
@@ -52,7 +52,7 @@ describe("authService.register", () => {
   })
 
   it("propagates conflict error when email is already taken", async () => {
-    mock.onPost("/api/v1/auth/register").reply(409, { error: "email already in use" })
+    mock.onPost("/api/auth/register").reply(409, { error: "email already in use" })
 
     await expect(
       authService.register({ email: "taken@google.com", password: "pass", display_name: "Test" }),

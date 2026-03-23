@@ -6,18 +6,18 @@ import type { Wallet } from "@/features/wallet/types"
 export const transferService = {
   listTransfers: (params?: { limit?: number; offset?: number }) =>
     http
-      .get<{ data: Transaction[]; total: number }>("/api/v1/transfers", { params })
+      .get<{ data: Transaction[]; total: number }>("/api/transfers", { params })
       .then((r) => r.data),
 
   createTransfer: (body: CreateTransferInput, idempotencyKey: string) =>
     http
-      .post<Transaction>("/api/v1/transfers", body, {
+      .post<Transaction>("/api/transfers", body, {
         headers: { "Idempotency-Key": idempotencyKey },
       })
       .then((r) => r.data),
 
   getTransfer: (id: string) =>
-    http.get<Transaction>(`/api/v1/transfers/${id}`).then((r) => r.data),
+    http.get<Transaction>(`/api/transfers/${id}`).then((r) => r.data),
 }
 
 export function streamTransactions(handlers: {
@@ -29,7 +29,7 @@ export function streamTransactions(handlers: {
 }): void {
   const token = localStorage.getItem("flowpay_token")
 
-  fetchEventSource("/api/v1/transfers/stream", {
+  fetchEventSource("/api/transfers/stream", {
     headers: { Authorization: token ? `Bearer ${token}` : "" },
     signal: handlers.signal,
     async onopen(response) {
