@@ -11,10 +11,11 @@ import (
 )
 
 type Handlers struct {
-	Auth     *handler.AuthHandler
-	Wallet   *handler.WalletHandler
-	Transfer *handler.TransferHandler
-	Health   *handler.HealthHandler
+	Auth             *handler.AuthHandler
+	Wallet           *handler.WalletHandler
+	Transfer         *handler.TransferHandler
+	Health           *handler.HealthHandler
+	ScheduledPayment *handler.ScheduledPaymentHandler
 }
 
 func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.Engine {
@@ -29,14 +30,13 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 		AllowCredentials: true,
 	}))
 
-	r.GET("/health", handlers.Health.Health)
-
 	if gin.Mode() != gin.ReleaseMode {
 		r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
 	v1 := r.Group("/api/v1")
 	{
+		v1.GET("/health", handlers.Health.Health)
 		v1.GET("/currencies", handler.GetCurrencies)
 
 		auth := v1.Group("/auth")
@@ -55,6 +55,10 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 			protected.GET("/transfers/stream", handlers.Transfer.StreamTransactions)
 			protected.GET("/transfers/:id", handlers.Transfer.GetTransfer)
 			protected.POST("/transfers/:id/reverse", handlers.Transfer.ReverseTransfer)
+
+			protected.POST("/scheduled-payments", handlers.ScheduledPayment.Create)
+			protected.GET("/scheduled-payments", handlers.ScheduledPayment.List)
+			protected.DELETE("/scheduled-payments/:id", handlers.ScheduledPayment.Cancel)
 		}
 	}
 

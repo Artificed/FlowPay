@@ -4,18 +4,21 @@ import (
 	"context"
 	"errors"
 	"flowpay-be/internal/currency"
+	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
+	"time"
 
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/temporal"
 )
 
 type Activities struct {
-	transferSvc service.TransferService
+	transferSvc        service.TransferService
+	scheduledPaymentRepo repository.ScheduledPaymentRepository
 }
 
-func NewActivities(transferSvc service.TransferService) *Activities {
-	return &Activities{transferSvc: transferSvc}
+func NewActivities(transferSvc service.TransferService, scheduledPaymentRepo repository.ScheduledPaymentRepository) *Activities {
+	return &Activities{transferSvc: transferSvc, scheduledPaymentRepo: scheduledPaymentRepo}
 }
 
 func (a *Activities) ValidateTransferActivity(ctx context.Context, input service.TransferInput) (*service.TransferValidation, error) {
@@ -53,6 +56,14 @@ func (a *Activities) FailTransactionActivity(ctx context.Context, txnID uuid.UUI
 func (a *Activities) CompensateTransferActivity(ctx context.Context, txnID uuid.UUID, senderWalletID uuid.UUID) error {
 	_, err := a.transferSvc.ReverseTransfer(ctx, txnID, senderWalletID)
 	return wrapBusinessError(err)
+}
+
+func (a *Activities) CheckScheduledPaymentActiveActivity(ctx context.Context, id uuid.UUID) (bool, error) {
+	return a.scheduledPaymentRepo.IsActive(ctx, id)
+}
+
+func (a *Activities) UpdateScheduledPaymentNextRunActivity(ctx context.Context, id uuid.UUID, nextRun time.Time) error {
+	return a.scheduledPaymentRepo.UpdateNextRunAt(ctx, id, nextRun)
 }
 
 func wrapBusinessError(err error) error {

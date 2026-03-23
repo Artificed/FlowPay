@@ -55,10 +55,12 @@ func main() {
 	balanceRepo := repository.NewWalletBalanceRepository(db)
 	holdRepo := repository.NewWalletHoldRepository(db)
 	txRepo := repository.NewTransactionRepository(db)
+	spRepo := repository.NewScheduledPaymentRepository(db)
 
 	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
 	walletSvc := service.NewWalletService(db, walletRepo, balanceRepo, txRepo)
 	transferSvc := service.NewTransferService(db, walletRepo, balanceRepo, holdRepo, txRepo)
+	scheduledPaymentSvc := service.NewScheduledPaymentService(walletRepo, spRepo)
 
 	temporalClient, err := temporalworker.NewClient(cfg.TemporalAddress)
 	if err != nil {
@@ -67,17 +69,18 @@ func main() {
 	}
 	defer temporalClient.Close()
 
-	worker := temporalworker.NewWorker(temporalClient, transferSvc)
+	worker := temporalworker.NewWorker(temporalClient, transferSvc, spRepo)
 	if err := worker.Start(); err != nil {
 		slog.Error("temporal: worker start failed", "error", err)
 		os.Exit(1)
 	}
 
 	router := api.NewRouter(api.Handlers{
-		Auth:     handler.NewAuthHandler(authSvc),
-		Wallet:   handler.NewWalletHandler(walletSvc),
-		Transfer: handler.NewTransferHandler(transferSvc, walletSvc, temporalClient),
-		Health:   handler.NewHealthHandler(db),
+		Auth:             handler.NewAuthHandler(authSvc),
+		Wallet:           handler.NewWalletHandler(walletSvc),
+		Transfer:         handler.NewTransferHandler(transferSvc, walletSvc, temporalClient),
+		Health:           handler.NewHealthHandler(db),
+		ScheduledPayment: handler.NewScheduledPaymentHandler(scheduledPaymentSvc, temporalClient),
 	}, cfg.JWTSecret, cfg.CORSOrigins)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)

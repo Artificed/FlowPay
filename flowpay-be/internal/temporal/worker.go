@@ -1,6 +1,7 @@
 package temporal
 
 import (
+	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
 
 	"go.temporal.io/sdk/client"
@@ -13,12 +14,13 @@ func NewClient(address string) (client.Client, error) {
 	})
 }
 
-func NewWorker(c client.Client, transferSvc service.TransferService) worker.Worker {
+func NewWorker(c client.Client, transferSvc service.TransferService, scheduledPaymentRepo repository.ScheduledPaymentRepository) worker.Worker {
 	w := worker.New(c, TaskQueue, worker.Options{})
 
-	activities := NewActivities(transferSvc)
+	activities := NewActivities(transferSvc, scheduledPaymentRepo)
 	w.RegisterWorkflow(TransferWorkflow)
 	w.RegisterWorkflow(ReverseTransferWorkflow)
+	w.RegisterWorkflow(ScheduledPaymentWorkflow)
 	w.RegisterActivity(activities)
 
 	return w
