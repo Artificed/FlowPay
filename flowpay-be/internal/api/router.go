@@ -34,7 +34,7 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 		r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
-	v1 := r.Group("/api/v1")
+	v1 := r.Group("/api")
 	{
 		v1.GET("/health", handlers.Health.Health)
 		v1.GET("/currencies", handler.GetCurrencies)

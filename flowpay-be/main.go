@@ -2,7 +2,7 @@
 // @version         1.0
 // @description     FlowPay payment platform API
 // @host            localhost:8080
-// @BasePath        /api/v1
+// @BasePath        /api
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
