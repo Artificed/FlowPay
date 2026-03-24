@@ -42,7 +42,10 @@ export default function ProfilePage() {
     setAvatarError(null)
     try {
       const updated = await profileService.uploadAvatar(file)
-      updateUser(updated)
+      updateUser({
+        ...updated,
+        avatar_url: updated.avatar_url ? `${updated.avatar_url}?t=${Date.now()}` : null,
+      })
     } catch (err) {
       setAvatarError(err instanceof Error ? err.message : "Upload failed")
     } finally {
