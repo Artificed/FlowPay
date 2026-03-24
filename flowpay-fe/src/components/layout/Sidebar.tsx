@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom"
 import { Zap, House, ArrowLeftRight, CalendarClock, CircleUser, LogOut } from "lucide-react"
 import { useAuth } from "@/providers/AuthProvider"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface SidebarProps {
   isOpen: boolean
@@ -18,25 +19,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
 
   const sidebarContent = (
-    <div className="flex h-full w-60 flex-col bg-zinc-950/80 backdrop-blur-xl border-r border-white/5">
-      <div className="flex h-14 items-center gap-2.5 px-4 border-b border-white/5">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-white">
+    <div className="flex h-full w-64 flex-col bg-zinc-950/80 backdrop-blur-xl border-r border-white/5">
+      <div className="flex h-16 items-center gap-3 px-5 border-b border-white/5">
+        <div className="flex size-8 items-center justify-center rounded-xl bg-white">
           <Zap className="size-4 fill-zinc-950 text-zinc-950" />
         </div>
-        <span className="font-semibold tracking-tight text-white">FlowPay</span>
+        <span className="text-base font-semibold tracking-tight text-white">FlowPay</span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {nav.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive
-                    ? "bg-white/8 text-white"
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                  `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive
+                    ? "bg-white/12 text-white font-medium"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/8"
                   }`
                 }
               >
@@ -49,12 +50,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </nav>
 
       <div className="flex items-center gap-3 border-t border-white/5 p-4">
-        <div className="flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-medium text-indigo-300">
-          {user?.display_name[0].toUpperCase()}
-        </div>
+        <Avatar className="size-8">
+          <AvatarFallback className="bg-indigo-500/20 text-sm font-medium text-indigo-300">
+            {user?.display_name[0].toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
         <span className="flex-1 truncate text-sm text-zinc-300">{user?.display_name}</span>
         <button onClick={logout} className="shrink-0">
-          <LogOut className="size-4 text-zinc-600 transition-colors hover:text-zinc-300" />
+          <LogOut className="size-4 text-zinc-500 transition-colors hover:text-zinc-300" />
         </button>
       </div>
     </div>
