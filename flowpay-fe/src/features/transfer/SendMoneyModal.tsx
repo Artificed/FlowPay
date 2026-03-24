@@ -8,6 +8,21 @@ import { useCurrencies } from "@/features/wallet/useCurrencies"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const schema = z.object({
   recipient_wallet_id: z.string().uuid("Must be a valid wallet ID"),
@@ -60,21 +75,19 @@ export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/8 bg-zinc-900 p-8 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-white">Send money</h2>
-            <p className="mt-0.5 text-sm text-zinc-500">Transfer funds to another wallet</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-white/5 hover:text-zinc-300"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-md rounded-2xl border border-white/8 bg-zinc-900 p-8 shadow-2xl"
+      >
+        <DialogClose className="absolute right-6 top-6 rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-white/5 hover:text-zinc-300">
+          <X className="size-5" />
+        </DialogClose>
+
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-xl font-semibold tracking-tight text-white">Send money</DialogTitle>
+          <DialogDescription className="text-sm text-zinc-500">Transfer funds to another wallet</DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -92,12 +105,7 @@ export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
 
           <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              placeholder="0.00"
-              className="h-10"
-              {...register("amount")}
-            />
+            <Input id="amount" placeholder="0.00" className="h-10" {...register("amount")} />
             {errors.amount && (
               <p className="text-destructive text-xs">{errors.amount.message}</p>
             )}
@@ -109,19 +117,18 @@ export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
               name="currency"
               control={control}
               render={({ field }) => (
-                <select
-                  id="currency"
-                  className="h-10 w-full rounded-md border border-white/10 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                >
-                  {currencies.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code} — {c.name}
-                    </option>
-                  ))}
-                </select>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="h-10 w-full border-white/10 bg-zinc-800 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencies.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.code} — {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
             {errors.currency && (
@@ -133,12 +140,7 @@ export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
             <Label htmlFor="note">
               Note <span className="text-muted-foreground font-normal">(optional)</span>
             </Label>
-            <Input
-              id="note"
-              placeholder="What's this for?"
-              className="h-10"
-              {...register("note")}
-            />
+            <Input id="note" placeholder="What's this for?" className="h-10" {...register("note")} />
           </div>
 
           {(serverError || currencyError) && (
@@ -156,7 +158,7 @@ export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

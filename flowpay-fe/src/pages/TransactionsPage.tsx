@@ -7,6 +7,7 @@ import type { Transaction } from "@/features/transfer"
 import { Button } from "@/components/ui/button"
 import SendMoneyModal from "@/features/transfer/SendMoneyModal"
 import { formatAmount, formatDate, statusStyles } from "@/lib/formatting"
+import { Badge } from "@/components/ui/badge"
 
 const PAGE_SIZE = 10
 
@@ -76,7 +77,7 @@ export default function TransactionsPage() {
   )
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
+    <div className="mx-auto max-w-4xl px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-white">Transactions</h1>
         <Button
@@ -154,13 +155,11 @@ export default function TransactionsPage() {
                   <p className="mt-0.5 text-xs text-zinc-600">{formatDate(txn.created_at)}</p>
                 </div>
 
-                <span
-                  className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium sm:block ${
-                    statusStyles[txn.status] ?? statusStyles.pending
-                  }`}
+                <Badge
+                  className={`hidden shrink-0 sm:inline-flex ${statusStyles[txn.status] ?? statusStyles.pending}`}
                 >
                   {txn.status}
-                </span>
+                </Badge>
               </div>
             )
           })}

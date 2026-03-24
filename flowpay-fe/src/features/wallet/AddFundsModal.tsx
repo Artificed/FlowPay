@@ -8,6 +8,21 @@ import { useCurrencies } from "./useCurrencies"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const schema = z.object({
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount").refine((v) => parseFloat(v) > 0, "Amount must be greater than zero"),
@@ -50,21 +65,19 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/8 bg-zinc-900 p-8 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex flex-col items-start">
-            <h2 className="text-xl font-semibold tracking-tight text-white">Add funds</h2>
-            <p className="mt-0.5 text-sm text-zinc-500">Deposit money into your wallet</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-white/5 hover:text-zinc-300"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-sm rounded-2xl border border-white/8 bg-zinc-900 p-8 shadow-2xl"
+      >
+        <DialogClose className="absolute right-6 top-6 rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-white/5 hover:text-zinc-300">
+          <X className="size-5" />
+        </DialogClose>
+
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-xl font-semibold tracking-tight text-white">Add funds</DialogTitle>
+          <DialogDescription className="text-sm text-zinc-500">Deposit money into your wallet</DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -81,19 +94,18 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
               name="currency"
               control={control}
               render={({ field }) => (
-                <select
-                  id="currency"
-                  className="h-10 w-full rounded-md border border-white/10 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                >
-                  {currencies.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code} — {c.name}
-                    </option>
-                  ))}
-                </select>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="h-10 w-full border-white/10 bg-zinc-800 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencies.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.code} — {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
             {errors.currency && (
@@ -116,7 +128,7 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
