@@ -8,7 +8,7 @@ CREATE TABLE users (
     email         VARCHAR(320) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     display_name  VARCHAR(100) NOT NULL,
-    avatar_url    VARCHAR(2048)
+    avatar_url    VARCHAR(500)
 );
 
 CREATE UNIQUE INDEX idx_users_email ON users (email) WHERE deleted_at IS NULL;
