@@ -16,6 +16,7 @@ type Handlers struct {
 	Transfer         *handler.TransferHandler
 	Health           *handler.HealthHandler
 	ScheduledPayment *handler.ScheduledPaymentHandler
+	User             *handler.UserHandler
 }
 
 func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.Engine {
@@ -59,6 +60,11 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 			protected.POST("/scheduled-payments", handlers.ScheduledPayment.Create)
 			protected.GET("/scheduled-payments", handlers.ScheduledPayment.List)
 			protected.DELETE("/scheduled-payments/:id", handlers.ScheduledPayment.Cancel)
+
+			protected.PUT("/profile/avatar", handlers.User.UpdateAvatar)
+			protected.DELETE("/profile/avatar", handlers.User.RemoveAvatar)
+			protected.PATCH("/profile", handlers.User.UpdateProfile)
+			protected.PATCH("/profile/password", handlers.User.ChangePassword)
 		}
 	}
 

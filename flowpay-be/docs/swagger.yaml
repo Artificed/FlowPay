@@ -163,6 +163,8 @@ definitions:
     - TransactionTypeDeposit
   models.User:
     properties:
+      avatar_url:
+        type: string
       created_at:
         type: string
       display_name:
@@ -173,8 +175,6 @@ definitions:
         type: string
       updated_at:
         type: string
-      wallet:
-        $ref: '#/definitions/models.Wallet'
     type: object
   models.Wallet:
     properties:
@@ -323,6 +323,87 @@ paths:
       summary: Health check
       tags:
       - health
+  /profile:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile update
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            display_name:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - BearerAuth: []
+      summary: Update display name
+      tags:
+      - profile
+  /profile/avatar:
+    delete:
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Remove profile picture
+      tags:
+      - profile
+    put:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Avatar image (jpeg/png/webp, max 5MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - BearerAuth: []
+      summary: Upload profile picture
+      tags:
+      - profile
+  /profile/password:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Password change
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            current_password:
+              type: string
+            new_password:
+              type: string
+          type: object
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Change password
+      tags:
+      - profile
   /scheduled-payments:
     get:
       produces:

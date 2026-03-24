@@ -12,6 +12,9 @@ type UserRepository interface {
 	Create(ctx context.Context, user *models.User) error
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	UpdateAvatarURL(ctx context.Context, userID uuid.UUID, url *string) error
+	UpdateDisplayName(ctx context.Context, userID uuid.UUID, name string) error
+	UpdatePasswordHash(ctx context.Context, userID uuid.UUID, hash string) error
 }
 
 type userRepository struct {
@@ -40,4 +43,25 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Us
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) UpdateAvatarURL(ctx context.Context, userID uuid.UUID, url *string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("avatar_url", url).Error
+}
+
+func (r *userRepository) UpdateDisplayName(ctx context.Context, userID uuid.UUID, name string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("display_name", name).Error
+}
+
+func (r *userRepository) UpdatePasswordHash(ctx context.Context, userID uuid.UUID, hash string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("password_hash", hash).Error
 }

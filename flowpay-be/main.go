@@ -19,6 +19,7 @@ import (
 	"flowpay-be/internal/database"
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
+	"flowpay-be/internal/storage"
 	temporalworker "flowpay-be/internal/temporal"
 	"fmt"
 	"log/slog"
@@ -57,10 +58,21 @@ func main() {
 	txRepo := repository.NewTransactionRepository(db)
 	spRepo := repository.NewScheduledPaymentRepository(db)
 
+	storageSvc, err := storage.NewStorageService(cfg.MinioEndpoint, cfg.MinioAccessKey, cfg.MinioSecretKey, cfg.MinioBucket, cfg.MinioPublicURL, false)
+	if err != nil {
+		slog.Error("minio: create client failed", "error", err)
+		os.Exit(1)
+	}
+	if err := storageSvc.EnsureBucket(context.Background()); err != nil {
+		slog.Error("minio: ensure bucket failed", "error", err)
+		os.Exit(1)
+	}
+
 	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
 	walletSvc := service.NewWalletService(db, walletRepo, balanceRepo, txRepo)
 	transferSvc := service.NewTransferService(db, walletRepo, balanceRepo, holdRepo, txRepo)
 	scheduledPaymentSvc := service.NewScheduledPaymentService(walletRepo, spRepo)
+	userSvc := service.NewUserService(userRepo, storageSvc)
 
 	temporalClient, err := temporalworker.NewClient(cfg.TemporalAddress)
 	if err != nil {
@@ -81,6 +93,7 @@ func main() {
 		Transfer:         handler.NewTransferHandler(transferSvc, walletSvc, temporalClient),
 		Health:           handler.NewHealthHandler(db),
 		ScheduledPayment: handler.NewScheduledPaymentHandler(scheduledPaymentSvc, temporalClient),
+		User:             handler.NewUserHandler(userSvc),
 	}, cfg.JWTSecret, cfg.CORSOrigins)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)

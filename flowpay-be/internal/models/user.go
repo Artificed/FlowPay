@@ -8,5 +8,6 @@ type User struct {
 	Email        string         `gorm:"uniqueIndex;not null;size:320" json:"email"`
 	PasswordHash string         `gorm:"not null;size:255"             json:"-"`
 	DisplayName  string         `gorm:"not null;size:100"             json:"display_name"`
-	Wallet       *Wallet        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	AvatarURL    *string        `gorm:"size:500"                      json:"avatar_url"`
+	Wallet       *Wallet        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 }
