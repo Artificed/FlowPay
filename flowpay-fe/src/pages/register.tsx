@@ -13,13 +13,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 const schema = z.object({
+  display_name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(8, "Must be at least 8 characters"),
 })
 
 type FormData = z.infer<typeof schema>
 
-export default function LoginPage() {
+export default function Register() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [serverError, setServerError] = useState<string | null>(null)
@@ -33,22 +34,38 @@ export default function LoginPage() {
   async function onSubmit(data: FormData) {
     setServerError(null)
     try {
-      const result = await authService.login(data)
+      const result = await authService.register(data)
       login(result)
       navigate("/dashboard")
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Login failed")
+      setServerError(err instanceof Error ? err.message : "Registration failed")
     }
   }
 
   return (
     <AuthLayout>
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>
-        <p className="text-muted-foreground text-sm">Enter your credentials to continue</p>
+        <h2 className="text-2xl font-semibold tracking-tight">Create account</h2>
+        <p className="text-muted-foreground text-sm">
+          Get started with FlowPay in seconds
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="display_name">Full name</Label>
+          <Input
+            id="display_name"
+            placeholder="Dummy User"
+            autoComplete="name"
+            className="h-10"
+            {...register("display_name")}
+          />
+          {errors.display_name && (
+            <p className="text-destructive text-xs">{errors.display_name.message}</p>
+          )}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -69,7 +86,7 @@ export default function LoginPage() {
           <Input
             id="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             className="h-10"
             {...register("password")}
           />
@@ -86,10 +103,10 @@ export default function LoginPage() {
 
         <Button type="submit" disabled={isSubmitting} className="group h-10 w-full">
           {isSubmitting ? (
-            "Signing in…"
+            "Creating account…"
           ) : (
             <>
-              Sign in
+              Create account
               <ArrowRight className="ml-1 size-4 transition-transform group-hover:translate-x-0.5" />
             </>
           )}
@@ -97,12 +114,12 @@ export default function LoginPage() {
       </form>
 
       <p className="text-muted-foreground text-center text-sm">
-        No account?{" "}
+        Already have an account?{" "}
         <Link
-          to="/register"
+          to="/login"
           className="text-foreground font-medium underline underline-offset-4"
         >
-          Create one
+          Sign in
         </Link>
       </p>
     </AuthLayout>

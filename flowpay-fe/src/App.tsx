@@ -1,19 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import ProtectedRoute from "@/components/layout/protected-route"
 import AppLayout from "@/components/layout/app-layout"
-import LoginPage from "@/pages/login-page"
-import RegisterPage from "@/pages/register-page"
-import HomePage from "@/pages/home-page"
-import TransactionsPage from "@/pages/transactions-page"
-import ScheduledPage from "@/pages/scheduled-page"
-import ProfilePage from "@/pages/profile-page"
+import Login from "@/pages/login"
+import Register from "@/pages/register"
+import Home from "@/pages/home"
+import Transactions from "@/pages/transactions"
+import Scheduled from "@/pages/scheduled"
+import Profile from "@/pages/profile"
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/app"
           element={
@@ -23,10 +23,10 @@ export default function App() {
           }
         >
           <Route index element={<Navigate to="home" replace />} />
-          <Route path="home" element={<HomePage />} />
-          <Route path="transactions" element={<TransactionsPage />} />
-          <Route path="scheduled" element={<ScheduledPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="home" element={<Home />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="scheduled" element={<Scheduled />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
         <Route path="/dashboard" element={<Navigate to="/app/home" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />

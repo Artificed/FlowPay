@@ -1,13 +1,12 @@
 import { useEffect, useState, useCallback } from "react"
 import { CalendarClock, Plus, Trash2, RefreshCw } from "lucide-react"
-import { scheduledPaymentService } from "@/features/scheduled/services"
-import type { ScheduledPayment } from "@/features/scheduled/types"
-import CreateScheduledModal from "@/features/scheduled/create-scheduled-modal"
+import { scheduledPaymentService, CreateScheduledModal } from "@/features/scheduled"
+import type { ScheduledPayment } from "@/features/scheduled"
 import { Button } from "@/components/ui/button"
 import { formatAmount, formatDate } from "@/lib/formatting"
 import { Badge } from "@/components/ui/badge"
 
-export default function ScheduledPage() {
+export default function Scheduled() {
   const [payments, setPayments] = useState<ScheduledPayment[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)

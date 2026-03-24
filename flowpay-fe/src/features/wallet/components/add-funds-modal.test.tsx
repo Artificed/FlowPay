@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import AddFundsModal from "./add-funds-modal"
 
-vi.mock("./use-currencies", () => ({
+vi.mock("../hooks/use-currencies", () => ({
   useCurrencies: () => ({
     currencies: [
       { code: "USD", name: "US Dollar" },
@@ -14,7 +14,7 @@ vi.mock("./use-currencies", () => ({
 }))
 
 const mockDeposit = vi.fn()
-vi.mock("./services", () => ({
+vi.mock("../services", () => ({
   walletService: {
     deposit: (...args: unknown[]) => mockDeposit(...args),
   },

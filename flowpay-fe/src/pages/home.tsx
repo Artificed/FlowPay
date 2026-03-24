@@ -19,8 +19,8 @@ import type { Wallet } from "@/features/wallet"
 import type { Transaction } from "@/features/transfer"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import SendMoneyModal from "@/features/transfer/send-money-modal"
-import AddFundsModal from "@/features/wallet/add-funds-modal"
+import { SendMoneyModal } from "@/features/transfer"
+import { AddFundsModal } from "@/features/wallet"
 import { formatAmount, formatDate, getGreeting } from "@/lib/formatting"
 
 function WalletIDCopy({ id }: { id: string }) {
@@ -146,7 +146,7 @@ const CHART_LABELS: Record<FilterRange, string> = {
   all: "all time",
 }
 
-export default function HomePage() {
+export default function Home() {
   const { user } = useAuth()
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])

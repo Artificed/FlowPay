@@ -5,13 +5,13 @@ import { transferService, streamTransactions } from "@/features/transfer"
 import type { Wallet } from "@/features/wallet"
 import type { Transaction } from "@/features/transfer"
 import { Button } from "@/components/ui/button"
-import SendMoneyModal from "@/features/transfer/send-money-modal"
+import { SendMoneyModal } from "@/features/transfer"
 import { formatAmount, formatDate, statusStyles } from "@/lib/formatting"
 import { Badge } from "@/components/ui/badge"
 
 const PAGE_SIZE = 10
 
-export default function TransactionsPage() {
+export default function Transactions() {
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [total, setTotal] = useState(0)
@@ -33,7 +33,7 @@ export default function TransactionsPage() {
   }, [])
 
   useEffect(() => {
-    walletService.getWallet().then(setWallet).catch(() => {})
+    walletService.getWallet().then(setWallet).catch(() => { })
   }, [])
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function TransactionsPage() {
     const ctrl = new AbortController()
     streamTransactions({
       signal: ctrl.signal,
-      onSnapshot() {},
+      onSnapshot() { },
       onTransactionUpdate(updated) {
         setTransactions((prev) => {
           const exists = prev.some((t) => t.id === updated.id)
@@ -104,9 +104,8 @@ export default function TransactionsPage() {
 
       {transactions.length > 0 && (
         <div
-          className={`overflow-hidden rounded-2xl border border-white/5 transition-opacity duration-150 ${
-            txLoading ? "pointer-events-none opacity-50" : ""
-          }`}
+          className={`overflow-hidden rounded-2xl border border-white/5 transition-opacity duration-150 ${txLoading ? "pointer-events-none opacity-50" : ""
+            }`}
         >
           {transactions.map((txn, i) => {
             const isDeposit = txn.type === "deposit"
@@ -114,18 +113,16 @@ export default function TransactionsPage() {
             return (
               <div
                 key={txn.id}
-                className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${
-                  i !== transactions.length - 1 ? "border-b border-white/5" : ""
-                }`}
+                className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${i !== transactions.length - 1 ? "border-b border-white/5" : ""
+                  }`}
               >
                 <div
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                    isDeposit
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isDeposit
                       ? "bg-indigo-500/10 text-indigo-400"
                       : isOutgoing
                         ? "bg-zinc-800 text-zinc-400"
                         : "bg-emerald-500/10 text-emerald-400"
-                  }`}
+                    }`}
                 >
                   {isDeposit ? (
                     <PlusCircle className="size-4" />
@@ -145,9 +142,8 @@ export default function TransactionsPage() {
 
                 <div className="text-right">
                   <p
-                    className={`text-sm font-medium ${
-                      isOutgoing ? "text-zinc-300" : "text-emerald-400"
-                    }`}
+                    className={`text-sm font-medium ${isOutgoing ? "text-zinc-300" : "text-emerald-400"
+                      }`}
                   >
                     {isOutgoing ? "−" : "+"}
                     {formatAmount(txn.amount, txn.currency)}

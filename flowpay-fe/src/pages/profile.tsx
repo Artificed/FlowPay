@@ -1,6 +1,6 @@
 import { useAuth } from "@/providers/auth-provider"
 
-export default function ProfilePage() {
+export default function Profile() {
   const { user } = useAuth()
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
