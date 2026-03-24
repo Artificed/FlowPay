@@ -2,7 +2,7 @@ import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from "recharts"
 import type { Transaction, FilterRange, ChartPoint } from "../types"
 import { getFilteredTransactions } from "../lib/selectors"
 
-function buildChartData(transactions: Transaction[], walletId: string, filterRange: FilterRange): ChartPoint[] {
+function buildChartData(transactions: Transaction[], walletId: string, filterRange: FilterRange, currency: string): ChartPoint[] {
   const now = new Date()
 
   if (filterRange === "1d") {
@@ -13,7 +13,7 @@ function buildChartData(transactions: Transaction[], walletId: string, filterRan
     }
     const startOfToday = new Date(now)
     startOfToday.setHours(0, 0, 0, 0)
-    for (const txn of transactions) {
+    for (const txn of transactions.filter((t) => t.currency === currency)) {
       const d = new Date(txn.created_at)
       if (d < startOfToday) continue
       const slotHour = Math.floor(d.getHours() / 2) * 2
@@ -38,7 +38,7 @@ function buildChartData(transactions: Transaction[], walletId: string, filterRan
     days[label] = { date: label, inflow: 0, outflow: 0 }
   }
 
-  for (const txn of transactions) {
+  for (const txn of transactions.filter((t) => t.currency === currency)) {
     const d = new Date(txn.created_at)
     const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
     if (!(label in days)) continue
@@ -87,11 +87,12 @@ type Props = {
   transactions: Transaction[]
   walletId: string
   filterRange: FilterRange
+  currency: string
 }
 
-export function ActivityChart({ transactions, walletId, filterRange }: Props) {
+export function ActivityChart({ transactions, walletId, filterRange, currency }: Props) {
   const filtered = getFilteredTransactions(transactions, filterRange)
-  const chartData = buildChartData(filtered, walletId, filterRange)
+  const chartData = buildChartData(filtered, walletId, filterRange, currency)
   const chartXAxisInterval = filterRange === "1d" ? 1 : filterRange === "7d" ? 0 : 4
 
   return (
