@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest"
 import MockAdapter from "axios-mock-adapter"
-import { http } from "@/lib/http"
+import { api } from "@/lib/api"
 import { transferService } from "./services"
 
-const mock = new MockAdapter(http)
+const mock = new MockAdapter(api)
 
 afterEach(() => mock.reset())
 
@@ -22,7 +22,7 @@ const mockTxn = {
 
 describe("transferService.createTransfer", () => {
   it("POST /api/transfers with Idempotency-Key header", async () => {
-    mock.onPost("/api/transfers").reply(201, mockTxn)
+    mock.onPost("/transfers").reply(201, mockTxn)
 
     const result = await transferService.createTransfer(
       { recipient_wallet_id: "w2", amount: 5000, currency: "USD" },
@@ -34,7 +34,7 @@ describe("transferService.createTransfer", () => {
   })
 
   it("propagates business error from server", async () => {
-    mock.onPost("/api/transfers").reply(422, { error: "insufficient funds" })
+    mock.onPost("/transfers").reply(422, { error: "insufficient funds" })
 
     await expect(
       transferService.createTransfer({ recipient_wallet_id: "w2", amount: 99999999, currency: "USD" }, "key"),
@@ -44,7 +44,7 @@ describe("transferService.createTransfer", () => {
 
 describe("transferService.listTransfers", () => {
   it("GET /api/transfers and returns paginated result", async () => {
-    mock.onGet("/api/transfers").reply(200, { data: [mockTxn], total: 1 })
+    mock.onGet("/transfers").reply(200, { data: [mockTxn], total: 1 })
 
     const result = await transferService.listTransfers({ limit: 10, offset: 0 })
 
@@ -54,7 +54,7 @@ describe("transferService.listTransfers", () => {
   })
 
   it("passes limit and offset as query params", async () => {
-    mock.onGet("/api/transfers").reply(200, { data: [], total: 0 })
+    mock.onGet("/transfers").reply(200, { data: [], total: 0 })
 
     await transferService.listTransfers({ limit: 5, offset: 10 })
 
@@ -64,7 +64,7 @@ describe("transferService.listTransfers", () => {
 
 describe("transferService.getTransfer", () => {
   it("GET /api/transfers/:id", async () => {
-    mock.onGet("/api/transfers/t1").reply(200, mockTxn)
+    mock.onGet("/transfers/t1").reply(200, mockTxn)
 
     const result = await transferService.getTransfer("t1")
 

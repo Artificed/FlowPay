@@ -1,10 +1,10 @@
-import { http } from "@/lib/http"
+import { api } from "@/lib/api"
 import type { AuthResult } from "./types"
 
 export const authService = {
   register: (body: { email: string; password: string; display_name: string }) =>
-    http.post<AuthResult>("/api/auth/register", body).then((r) => r.data),
+    api.post<AuthResult>("/auth/register", body).then((r) => r.data),
 
   login: (body: { email: string; password: string }) =>
-    http.post<AuthResult>("/api/auth/login", body).then((r) => r.data),
+    api.post<AuthResult>("/auth/login", body).then((r) => r.data),
 }

@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest"
 import MockAdapter from "axios-mock-adapter"
-import { http } from "@/lib/http"
+import { api } from "@/lib/api"
 import { walletService } from "./services"
 
-const mock = new MockAdapter(http)
+const mock = new MockAdapter(api)
 
 afterEach(() => mock.reset())
 
@@ -15,7 +15,7 @@ const mockWallet = {
 
 describe("walletService.getWallet", () => {
   it("GET /api/wallet and returns wallet", async () => {
-    mock.onGet("/api/wallet").reply(200, mockWallet)
+    mock.onGet("/wallet").reply(200, mockWallet)
 
     const wallet = await walletService.getWallet()
 
@@ -28,7 +28,7 @@ describe("walletService.getWallet", () => {
 describe("walletService.deposit", () => {
   it("POST /api/wallet/deposit with amount and currency", async () => {
     const mockBalance = { id: "b1", wallet_id: "w1", currency: "USD", total_amount: 15000, available_amount: 15000 }
-    mock.onPost("/api/wallet/deposit").reply(200, mockBalance)
+    mock.onPost("/wallet/deposit").reply(200, mockBalance)
 
     const result = await walletService.deposit({ amount: 5000, currency: "USD" })
 
@@ -40,7 +40,7 @@ describe("walletService.deposit", () => {
   })
 
   it("propagates error from server", async () => {
-    mock.onPost("/api/wallet/deposit").reply(400, { error: "unsupported currency" })
+    mock.onPost("/wallet/deposit").reply(400, { error: "unsupported currency" })
 
     await expect(walletService.deposit({ amount: 100, currency: "XYZ" })).rejects.toThrow("unsupported currency")
   })
@@ -49,7 +49,7 @@ describe("walletService.deposit", () => {
 describe("walletService.getCurrencies", () => {
   it("GET /api/currencies and returns list", async () => {
     const currencies = [{ code: "USD", name: "US Dollar" }]
-    mock.onGet("/api/currencies").reply(200, currencies)
+    mock.onGet("/currencies").reply(200, currencies)
 
     const result = await walletService.getCurrencies()
 

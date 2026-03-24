@@ -2,15 +2,17 @@ import axios, { type AxiosRequestConfig } from "axios"
 
 const TOKEN_KEY = "flowpay_token"
 
-export const http = axios.create({
-  baseURL: "",
+export const BASE_URL = "/api"
+
+export const api = axios.create({
+  baseURL: BASE_URL,
   timeout: 15_000,
   headers: {
     "Content-Type": "application/json",
   },
 })
 
-http.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -18,7 +20,7 @@ http.interceptors.request.use((config) => {
   return config
 })
 
-http.interceptors.response.use(
+api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {

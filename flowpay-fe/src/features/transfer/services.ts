@@ -1,23 +1,23 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source"
-import { http } from "@/lib/http"
+import { api, BASE_URL } from "@/lib/api"
 import type { Transaction, CreateTransferInput } from "./types"
 import type { Wallet } from "@/features/wallet/types"
 
 export const transferService = {
   listTransfers: (params?: { limit?: number; offset?: number }) =>
-    http
-      .get<{ data: Transaction[]; total: number }>("/api/transfers", { params })
+    api
+      .get<{ data: Transaction[]; total: number }>("/transfers", { params })
       .then((r) => r.data),
 
   createTransfer: (body: CreateTransferInput, idempotencyKey: string) =>
-    http
-      .post<Transaction>("/api/transfers", body, {
+    api
+      .post<Transaction>("/transfers", body, {
         headers: { "Idempotency-Key": idempotencyKey },
       })
       .then((r) => r.data),
 
   getTransfer: (id: string) =>
-    http.get<Transaction>(`/api/transfers/${id}`).then((r) => r.data),
+    api.get<Transaction>(`/transfers/${id}`).then((r) => r.data),
 }
 
 export function streamTransactions(handlers: {
@@ -29,7 +29,7 @@ export function streamTransactions(handlers: {
 }): void {
   const token = localStorage.getItem("flowpay_token")
 
-  fetchEventSource("/api/transfers/stream", {
+  fetchEventSource(`${BASE_URL}/transfers/stream`, {
     headers: { Authorization: token ? `Bearer ${token}` : "" },
     signal: handlers.signal,
     async onopen(response) {
