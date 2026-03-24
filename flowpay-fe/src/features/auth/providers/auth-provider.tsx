@@ -6,6 +6,7 @@ type AuthContextValue = {
   token: string | null
   login: (result: AuthResult) => void
   logout: () => void
+  updateUser: (user: User) => void
   isAuthenticated: boolean
 }
 
@@ -35,8 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const updateUser = useCallback((updated: User) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(updated))
+    setUser(updated)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   )

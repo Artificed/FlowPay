@@ -152,7 +152,6 @@ export default function HomePage() {
             <Button
               variant="outline"
               onClick={() => {
-                /* TODO: export transactions as CSV */
               }}
               className="h-9 gap-1.5 rounded-full border-white/8 bg-white/4 px-4 text-zinc-400 hover:bg-white/8 hover:text-zinc-400"
             >

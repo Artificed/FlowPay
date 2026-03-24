@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom"
 import { Zap, House, ArrowLeftRight, CalendarClock, CircleUser, LogOut } from "lucide-react"
 import { useAuth } from "@/features/auth"
-import { Avatar, AvatarFallback } from "@/shared/ui/primitives/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/primitives/avatar"
 
 interface SidebarProps {
   isOpen: boolean
@@ -51,6 +51,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <div className="flex items-center gap-3 border-t border-white/5 p-4">
         <Avatar className="size-8">
+          <AvatarImage src={user?.avatar_url ?? undefined} alt={user?.display_name} />
           <AvatarFallback className="bg-indigo-500/20 text-sm font-medium text-indigo-300">
             {user?.display_name[0].toUpperCase()}
           </AvatarFallback>
