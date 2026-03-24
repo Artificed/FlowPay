@@ -16,6 +16,10 @@ export type Transaction = {
   updated_at: string
 }
 
+export type FilterRange = "1d" | "7d" | "30d" | "all"
+
+export type ChartPoint = { date: string; inflow: number; outflow: number }
+
 export type CreateTransferInput = {
   recipient_wallet_id: string
   amount: number

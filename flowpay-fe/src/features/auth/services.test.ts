@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest"
 import MockAdapter from "axios-mock-adapter"
-import { api } from "@/lib/api"
+import { apiClient } from "@/shared/lib/api/client"
 import { authService } from "./services"
 
-const mock = new MockAdapter(api)
+const mock = new MockAdapter(apiClient)
 
 afterEach(() => mock.reset())
 

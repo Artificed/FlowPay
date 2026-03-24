@@ -1,14 +1,11 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 
-import "./index.css"
-import App from "./app.tsx"
-import { AuthProvider } from "@/providers/auth-provider"
+import "./styles/index.css"
+import App from "./app/app"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <App />
   </StrictMode>
 )

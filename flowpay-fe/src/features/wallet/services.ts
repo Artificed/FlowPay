@@ -1,12 +1,12 @@
-import { api } from "@/lib/api"
+import { apiClient } from "@/shared/lib/api/client"
 import type { Wallet, WalletBalance, SupportedCurrency } from "./types"
 
 export const walletService = {
-  getWallet: () => api.get<Wallet>("/wallet").then((r) => r.data),
+  getWallet: () => apiClient.get<Wallet>("/wallet").then((r) => r.data),
 
   deposit: (body: { amount: number; currency: string }) =>
-    api.post<WalletBalance>("/wallet/deposit", body).then((r) => r.data),
+    apiClient.post<WalletBalance>("/wallet/deposit", body).then((r) => r.data),
 
   getCurrencies: () =>
-    api.get<SupportedCurrency[]>("/currencies").then((r) => r.data),
+    apiClient.get<SupportedCurrency[]>("/currencies").then((r) => r.data),
 }

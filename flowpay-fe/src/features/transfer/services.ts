@@ -1,23 +1,23 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source"
-import { api, BASE_URL } from "@/lib/api"
+import { apiClient, BASE_URL } from "@/shared/lib/api/client"
 import type { Transaction, CreateTransferInput } from "./types"
 import type { Wallet } from "@/features/wallet/types"
 
 export const transferService = {
   listTransfers: (params?: { limit?: number; offset?: number }) =>
-    api
+    apiClient
       .get<{ data: Transaction[]; total: number }>("/transfers", { params })
       .then((r) => r.data),
 
   createTransfer: (body: CreateTransferInput, idempotencyKey: string) =>
-    api
+    apiClient
       .post<Transaction>("/transfers", body, {
         headers: { "Idempotency-Key": idempotencyKey },
       })
       .then((r) => r.data),
 
   getTransfer: (id: string) =>
-    api.get<Transaction>(`/transfers/${id}`).then((r) => r.data),
+    apiClient.get<Transaction>(`/transfers/${id}`).then((r) => r.data),
 }
 
 export function streamTransactions(handlers: {

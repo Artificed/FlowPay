@@ -5,9 +5,9 @@ import { X } from "lucide-react"
 import { useState } from "react"
 import { walletService } from "../services"
 import { useCurrencies } from "../hooks/use-currencies"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/shared/ui/primitives/button"
+import { Input } from "@/shared/ui/primitives/input"
+import { Label } from "@/shared/ui/primitives/label"
 import {
   Dialog,
   DialogContent,
@@ -15,17 +15,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"
+} from "@/shared/ui/primitives/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/shared/ui/primitives/select"
+import { amountField, parseDollarsToCents } from "@/shared/lib/formatting"
+import { FormErrorMessage } from "@/shared/ui/form/form-error-message"
 
 const schema = z.object({
-  amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount").refine((v) => parseFloat(v) > 0, "Amount must be greater than zero"),
+  amount: amountField,
   currency: z.string().min(1, "Select a currency"),
 })
 
@@ -54,7 +56,7 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
     setServerError(null)
     try {
       await walletService.deposit({
-        amount: Math.round(parseFloat(data.amount) * 100),
+        amount: parseDollarsToCents(data.amount),
         currency: data.currency,
       })
       onSuccess()
@@ -113,11 +115,7 @@ export default function AddFundsModal({ onClose, onSuccess }: Props) {
             )}
           </div>
 
-          {(serverError || currencyError) && (
-            <p className="bg-destructive/10 text-destructive rounded-lg px-3 py-2.5 text-sm">
-              {serverError || currencyError}
-            </p>
-          )}
+          <FormErrorMessage message={serverError || currencyError} />
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" className="h-10 flex-1" onClick={onClose}>
