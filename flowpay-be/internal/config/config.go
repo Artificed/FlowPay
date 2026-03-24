@@ -15,6 +15,11 @@ type Config struct {
 	TemporalAddress string
 	CORSOrigins     []string
 	migrationURL    string
+	MinioEndpoint   string
+	MinioPublicURL  string
+	MinioAccessKey  string
+	MinioSecretKey  string
+	MinioBucket     string
 }
 
 func Load() *Config {
@@ -47,6 +52,11 @@ func Load() *Config {
 			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 			user, password, host, port, name,
 		),
+		MinioEndpoint:  getEnv("MINIO_ENDPOINT", "minio:9000"),
+		MinioPublicURL: getEnv("MINIO_PUBLIC_URL", "http://localhost:9000"),
+		MinioAccessKey: getEnv("MINIO_ACCESS_KEY", ""),
+		MinioSecretKey: getEnv("MINIO_SECRET_KEY", ""),
+		MinioBucket:    getEnv("MINIO_BUCKET", "flowpay"),
 	}
 }
 

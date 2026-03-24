@@ -84,6 +84,24 @@ services:
     ports:
       - "8233:8080"
 
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_dev_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -116,6 +134,11 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       TEMPORAL_ADDRESS: temporal:7233
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: flowpay
     ports:
       - "8080:8080"
     volumes:
@@ -126,6 +149,8 @@ services:
         condition: service_healthy
       temporal-create-namespace:
         condition: service_completed_successfully
+      minio:
+        condition: service_healthy
 
   frontend:
     build:
@@ -143,4 +168,5 @@ services:
 volumes:
   postgres_dev_data:
   temporal_postgres_dev_data:
+  minio_dev_data:
   go_mod_cache:
