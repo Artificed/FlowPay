@@ -35,7 +35,6 @@ export default function ScheduledPage() {
         prev.map((p) => (p.id === id ? { ...p, status: "cancelled" } : p)),
       )
     } catch {
-      // ignore — leave state as-is
     } finally {
       setCancellingId(null)
     }
@@ -100,7 +99,7 @@ export default function ScheduledPage() {
                     payment={p}
                     isLast={i === cancelled.length - 1}
                     cancelling={false}
-                    onCancel={() => {}}
+                    onCancel={() => { }}
                   />
                 ))}
               </div>
@@ -131,14 +130,12 @@ function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) {
 
   return (
     <div
-      className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${
-        !isLast ? "border-b border-white/5" : ""
-      }`}
+      className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${!isLast ? "border-b border-white/5" : ""
+        }`}
     >
       <div
-        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-          isActive ? "bg-violet-500/10 text-violet-400" : "bg-zinc-800 text-zinc-600"
-        }`}
+        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${isActive ? "bg-violet-500/10 text-violet-400" : "bg-zinc-800 text-zinc-600"
+          }`}
       >
         <RefreshCw className="size-4" />
       </div>
