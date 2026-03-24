@@ -163,7 +163,7 @@ export default function HomePage() {
 
         <div className="grid gap-5 lg:grid-cols-[1fr_272px]">
           {wallet ? (
-            <ActivityChart transactions={transactions} walletId={wallet.id} filterRange={filterRange} />
+            <ActivityChart transactions={transactions} walletId={wallet.id} filterRange={filterRange} currency={activeCurrencyCode} />
           ) : (
             <div className="rounded-2xl border border-white/5 bg-white/3 p-5" />
           )}

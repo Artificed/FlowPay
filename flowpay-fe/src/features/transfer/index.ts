@@ -1,6 +1,7 @@
 export { transferService, streamTransactions } from "./services"
 export { default as SendMoneyModal } from "./components/send-money-modal"
 export { TransactionRow } from "./components/transaction-row"
+export { TransactionDetailModal } from "./components/transaction-detail-modal"
 export { ActivityChart } from "./components/activity-chart"
 export { useSSETransactions } from "./hooks/use-sse-transactions"
 export { getFilteredTransactions } from "./lib/selectors"

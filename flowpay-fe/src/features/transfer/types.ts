@@ -12,6 +12,8 @@ export type Transaction = {
   note?: string
   status: TransactionStatus
   type: TransactionType
+  sender_name?: string
+  recipient_name?: string
   created_at: string
   updated_at: string
 }
