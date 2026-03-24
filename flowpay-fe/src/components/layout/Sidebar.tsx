@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { Zap, House, ArrowLeftRight, CalendarClock, CircleUser, LogOut } from "lucide-react"
-import { useAuth } from "@/providers/AuthProvider"
+import { useAuth } from "@/providers/auth-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface SidebarProps {

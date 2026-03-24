@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import ProtectedRoute from "@/components/layout/ProtectedRoute"
-import AppLayout from "@/components/layout/AppLayout"
-import LoginPage from "@/pages/LoginPage"
-import RegisterPage from "@/pages/RegisterPage"
-import HomePage from "@/pages/HomePage"
-import TransactionsPage from "@/pages/TransactionsPage"
-import ScheduledPage from "@/pages/ScheduledPage"
-import ProfilePage from "@/pages/ProfilePage"
+import ProtectedRoute from "@/components/layout/protected-route"
+import AppLayout from "@/components/layout/app-layout"
+import LoginPage from "@/pages/login-page"
+import RegisterPage from "@/pages/register-page"
+import HomePage from "@/pages/home-page"
+import TransactionsPage from "@/pages/transactions-page"
+import ScheduledPage from "@/pages/scheduled-page"
+import ProfilePage from "@/pages/profile-page"
 
 export default function App() {
   return (

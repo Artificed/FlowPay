@@ -5,7 +5,7 @@ import { transferService, streamTransactions } from "@/features/transfer"
 import type { Wallet } from "@/features/wallet"
 import type { Transaction } from "@/features/transfer"
 import { Button } from "@/components/ui/button"
-import SendMoneyModal from "@/features/transfer/SendMoneyModal"
+import SendMoneyModal from "@/features/transfer/send-money-modal"
 import { formatAmount, formatDate, statusStyles } from "@/lib/formatting"
 import { Badge } from "@/components/ui/badge"
 

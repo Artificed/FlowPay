@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, waitFor } from "@testing-library/react"
-import { useCurrencies } from "./useCurrencies"
+import { useCurrencies } from "./use-currencies"
 import { walletService } from "./services"
 
 vi.mock("./services")
@@ -10,7 +10,7 @@ const mockCurrencies = [
   { code: "EUR", name: "Euro" },
 ]
 
-describe("useCurrencies", () => {
+describe("use-currencies", () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })

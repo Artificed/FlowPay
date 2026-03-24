@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, act } from "@testing-library/react"
-import { AuthProvider, useAuth } from "./AuthProvider"
+import { AuthProvider, useAuth } from "./auth-provider"
 import type { AuthResult } from "@/features/auth/types"
 
 const mockUser = { id: "u1", email: "dummy@google.com", display_name: "Dummy", created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" }
@@ -18,7 +18,7 @@ function TestConsumer() {
   )
 }
 
-describe("AuthProvider", () => {
+describe("auth-provider", () => {
   it("initializes as unauthenticated when no token in localStorage", () => {
     render(
       <AuthProvider>

@@ -1,4 +1,4 @@
-import { useAuth } from "@/providers/AuthProvider"
+import { useAuth } from "@/providers/auth-provider"
 
 export default function ProfilePage() {
   const { user } = useAuth()

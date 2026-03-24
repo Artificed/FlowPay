@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import { Menu } from "lucide-react"
-import Sidebar from "./Sidebar"
+import Sidebar from "./sidebar"
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)

@@ -12,15 +12,15 @@ import {
   Download,
 } from "lucide-react"
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from "recharts"
-import { useAuth } from "@/providers/AuthProvider"
+import { useAuth } from "@/providers/auth-provider"
 import { walletService } from "@/features/wallet"
 import { transferService, streamTransactions } from "@/features/transfer"
 import type { Wallet } from "@/features/wallet"
 import type { Transaction } from "@/features/transfer"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import SendMoneyModal from "@/features/transfer/SendMoneyModal"
-import AddFundsModal from "@/features/wallet/AddFundsModal"
+import SendMoneyModal from "@/features/transfer/send-money-modal"
+import AddFundsModal from "@/features/wallet/add-funds-modal"
 import { formatAmount, formatDate, getGreeting } from "@/lib/formatting"
 
 function WalletIDCopy({ id }: { id: string }) {

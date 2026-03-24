@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import AddFundsModal from "./AddFundsModal"
+import AddFundsModal from "./add-funds-modal"
 
-vi.mock("./useCurrencies", () => ({
+vi.mock("./use-currencies", () => ({
   useCurrencies: () => ({
     currencies: [
       { code: "USD", name: "US Dollar" },
