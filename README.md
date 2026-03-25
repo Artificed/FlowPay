@@ -11,6 +11,7 @@ FlowPay is a comprehensive digital wallet and payment processing system engineer
 - **Idempotent Transactions** - Secure money transfers through discrete, idempotent steps (Validate, Create, Hold, Debit, Credit).
 - **Saga Pattern Reversals** - Fully implemented `ReverseTransfer` acting as a compensating transaction that safely rolls back funds, debits recipients, and releases holds on failure.
 - **Real-time Synchronization** - Server-Sent Events (SSE) streaming updates to the dashboard for live transaction and wallet balance states.
+- **Scheduled Payments** - Schedule one-off or recurring payments with full lifecycle management (create, pause, reactivate, cancel), backed by a dedicated Temporal workflow with cron-style scheduling.
 
 ### Workflow Orchestration (Temporal)
 - **Deterministic Workflows** - Multi-step payment workflows orchestrated deterministically, independent of direct DB calls within the workflow definition.
@@ -27,6 +28,8 @@ FlowPay is a comprehensive digital wallet and payment processing system engineer
 - **Interactive Interface** - Built with React 19, Tailwind CSS 4, and `shadcn/ui` for a responsive, modern aesthetic.
 - **Live Transaction Monitoring** - Real-time displays for transaction histories, pending transfers, and live balance updates.
 - **Dynamic Modals** - Intuitive popups for sending money and depositing funds.
+- **Profile Management** - Avatar upload/delete (MinIO-backed), display name, email, and password editing with a glassmorphism profile card.
+- **Full Page Suite** — Home (balance overview, activity chart, recent transactions), Transactions (date-grouped history, full-text search, detail modal), Scheduled Payments (status filters, stats cards, lifecycle controls), and Profile pages.
 
 ---
 
@@ -56,6 +59,7 @@ A scalable Go server utilizing the Gin framework and GORM:
 | `repository/` | PostgreSQL database interactions via GORM. |
 | `config/` | Application configuration management. |
 | `models/` | Core domain entities. |
+| `storage/` | MinIO S3-compatible object storage client for user avatars. |
 
 #### Frontend Module (`flowpay-fe/`)
 A fast, modern React SPA leveraging Vite:
@@ -78,6 +82,7 @@ A fast, modern React SPA leveraging Vite:
 | **Database** | PostgreSQL 17 |
 | **Orchestration**| Temporal Server v1.30.1 |
 | **Infrastructure**| Docker, Docker Compose, Nginx |
+| **Storage** | MinIO (S3-compatible object storage for user avatars) |
 | **Security** | JWT, bcrypt |
 
 ---
@@ -106,8 +111,6 @@ docker compose -f docker-compose.dev.yml up -d
 Open a terminal and execute the Go backend application.
 ```bash
 cd flowpay-be
-go run cmd/server/main.go
-# Or, if using standard module structure
 go run main.go
 ```
 
@@ -145,3 +148,5 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 3. **Deposit funds** into the wallet using the Dashboard modal.
 4. **Initiate a Transfer** to another registered user using discrete money movements.
 5. **Monitor Orchestration**: Open the Temporal Web UI at `http://localhost:8233` to view the real-time execution of the background Saga workflow, tracking retry attempts, activity timelines, and fault-toleration states.
+6. **Schedule a Payment**: Navigate to the Scheduled Payments page to create a future or recurring payment, then pause, reactivate, or cancel it from the same dashboard.
+7. **Manage your Profile**: Visit the Profile page to upload an avatar, update your display name or email, and change your password.
