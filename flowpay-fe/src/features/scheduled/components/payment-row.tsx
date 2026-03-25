@@ -10,12 +10,23 @@ type RowProps = {
   onCancel: () => void
 }
 
+function getNextRunLabel(isoDate: string): string {
+  const nowDay = new Date(); nowDay.setHours(0, 0, 0, 0)
+  const targetDay = new Date(isoDate); targetDay.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((targetDay.getTime() - nowDay.getTime()) / 86400000)
+  if (diffDays < 0) return "Overdue"
+  if (diffDays === 0) return "Today"
+  if (diffDays === 1) return "Tomorrow"
+  return `in ${diffDays} days`
+}
+
 export function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) {
   const isActive = payment.status === "active"
+  const nextRunLabel = isActive ? getNextRunLabel(payment.next_run_at) : null
 
   return (
     <div
-      className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${!isLast ? "border-b border-white/5" : ""}`}
+      className={`flex items-start gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${!isLast ? "border-b border-white/5" : ""}`}
     >
       <div
         className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
@@ -36,11 +47,14 @@ export function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) 
           <span className="text-xs text-zinc-500">
             Every {payment.interval_days} {payment.interval_days === 1 ? "day" : "days"}
           </span>
-          {isActive && (
+          {isActive && nextRunLabel && (
             <>
-              <span className="text-zinc-700">·</span>
-              <span className="text-xs text-zinc-500">
-                Next: {formatDate(payment.next_run_at)}
+              <span className="text-xs text-zinc-700">·</span>
+              <span
+                className={`text-xs ${nextRunLabel === "Overdue" ? "text-red-400" : nextRunLabel === "Today" ? "text-amber-400" : "text-zinc-500"}`}
+                title={formatDate(payment.next_run_at)}
+              >
+                Next: {nextRunLabel}
               </span>
             </>
           )}

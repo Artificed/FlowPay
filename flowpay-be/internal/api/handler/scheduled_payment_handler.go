@@ -4,9 +4,11 @@ import (
 	"errors"
 	"flowpay-be/internal/api/middleware"
 	"flowpay-be/internal/currency"
+	"flowpay-be/internal/models"
 	"flowpay-be/internal/service"
 	temporalworker "flowpay-be/internal/temporal"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -116,13 +118,44 @@ func (h *ScheduledPaymentHandler) Create(c *gin.Context) {
 func (h *ScheduledPaymentHandler) List(c *gin.Context) {
 	userID := c.MustGet(middleware.UserIDKey).(uuid.UUID)
 
-	sps, err := h.svc.List(c.Request.Context(), userID)
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be a positive integer"})
+		return
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if err != nil || offset < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "offset must be a non-negative integer"})
+		return
+	}
+
+	var statusFilter *models.ScheduledPaymentStatus
+	if s := c.Query("status"); s != "" {
+		switch models.ScheduledPaymentStatus(s) {
+		case models.ScheduledPaymentStatusActive, models.ScheduledPaymentStatusCancelled:
+			v := models.ScheduledPaymentStatus(s)
+			statusFilter = &v
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "status must be 'active' or 'cancelled'"})
+			return
+		}
+	}
+
+	sps, err := h.svc.ListPage(c.Request.Context(), userID, statusFilter, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list scheduled payments"})
 		return
 	}
+	total, err := h.svc.Count(c.Request.Context(), userID, statusFilter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count scheduled payments"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"data": sps})
+	c.JSON(http.StatusOK, gin.H{"data": sps, "total": total})
 }
 
 // CancelScheduledPayment godoc

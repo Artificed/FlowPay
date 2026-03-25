@@ -2,10 +2,10 @@ import { apiClient } from "@/shared/lib/api/client"
 import type { ScheduledPayment, CreateScheduledPaymentInput } from "./types"
 
 export const scheduledPaymentService = {
-  list: () =>
+  list: (params?: { status?: "active" | "cancelled"; limit?: number; offset?: number }) =>
     apiClient
-      .get<{ data: ScheduledPayment[] }>("/scheduled-payments")
-      .then((r) => r.data.data),
+      .get<{ data: ScheduledPayment[]; total: number }>("/scheduled-payments", { params })
+      .then((r) => r.data),
 
   create: (body: CreateScheduledPaymentInput) =>
     apiClient

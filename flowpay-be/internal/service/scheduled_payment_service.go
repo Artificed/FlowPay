@@ -29,6 +29,8 @@ type CreateScheduledPaymentInput struct {
 type ScheduledPaymentService interface {
 	Create(ctx context.Context, input CreateScheduledPaymentInput) (*models.ScheduledPayment, error)
 	List(ctx context.Context, userID uuid.UUID) ([]models.ScheduledPayment, error)
+	ListPage(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus, limit, offset int) ([]models.ScheduledPayment, error)
+	Count(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error)
 	Cancel(ctx context.Context, id, userID uuid.UUID) error
 	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
 }
@@ -85,6 +87,14 @@ func (s *scheduledPaymentService) Create(ctx context.Context, input CreateSchedu
 
 func (s *scheduledPaymentService) List(ctx context.Context, userID uuid.UUID) ([]models.ScheduledPayment, error) {
 	return s.spRepo.ListByUserID(ctx, userID)
+}
+
+func (s *scheduledPaymentService) ListPage(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus, limit, offset int) ([]models.ScheduledPayment, error) {
+	return s.spRepo.ListPageByUserID(ctx, userID, status, limit, offset)
+}
+
+func (s *scheduledPaymentService) Count(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error) {
+	return s.spRepo.CountByUserID(ctx, userID, status)
 }
 
 func (s *scheduledPaymentService) Cancel(ctx context.Context, id, userID uuid.UUID) error {

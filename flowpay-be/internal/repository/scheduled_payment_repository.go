@@ -14,6 +14,8 @@ type ScheduledPaymentRepository interface {
 	Create(ctx context.Context, sp *models.ScheduledPayment) error
 	FindByID(ctx context.Context, id uuid.UUID) (*models.ScheduledPayment, error)
 	ListByUserID(ctx context.Context, userID uuid.UUID) ([]models.ScheduledPayment, error)
+	ListPageByUserID(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus, limit, offset int) ([]models.ScheduledPayment, error)
+	CountByUserID(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.ScheduledPaymentStatus) error
 	UpdateNextRunAt(ctx context.Context, id uuid.UUID, nextRunAt time.Time) error
 	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
@@ -45,6 +47,27 @@ func (r *scheduledPaymentRepository) ListByUserID(ctx context.Context, userID uu
 		return nil, err
 	}
 	return sps, nil
+}
+
+func (r *scheduledPaymentRepository) ListPageByUserID(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus, limit, offset int) ([]models.ScheduledPayment, error) {
+	var sps []models.ScheduledPayment
+	q := r.db.WithContext(ctx).Where("user_id = ?", userID)
+	if status != nil {
+		q = q.Where("status = ?", *status)
+	}
+	if err := q.Order("created_at DESC").Limit(limit).Offset(offset).Find(&sps).Error; err != nil {
+		return nil, err
+	}
+	return sps, nil
+}
+
+func (r *scheduledPaymentRepository) CountByUserID(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error) {
+	var count int64
+	q := r.db.WithContext(ctx).Model(&models.ScheduledPayment{}).Where("user_id = ?", userID)
+	if status != nil {
+		q = q.Where("status = ?", *status)
+	}
+	return count, q.Count(&count).Error
 }
 
 func (r *scheduledPaymentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.ScheduledPaymentStatus) error {
