@@ -2,6 +2,7 @@ package temporal
 
 import (
 	"flowpay-be/internal/service"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,17 +54,23 @@ func TransferWorkflow(ctx workflow.Context, input TransferWorkflowInput) (*Trans
 	}
 
 	if err := workflow.ExecuteActivity(ctx, a.HoldFundsActivity, txnID).Get(ctx, nil); err != nil {
-		_ = workflow.ExecuteActivity(ctx, a.FailTransactionActivity, txnID).Get(ctx, nil)
+		if failErr := workflow.ExecuteActivity(ctx, a.FailTransactionActivity, txnID).Get(ctx, nil); failErr != nil {
+			return nil, fmt.Errorf("hold funds failed: %w; mark transaction failed also failed: %v", err, failErr)
+		}
 		return nil, err
 	}
 
 	if err := workflow.ExecuteActivity(ctx, a.DebitSenderActivity, txnID).Get(ctx, nil); err != nil {
-		_ = workflow.ExecuteActivity(ctx, a.CompensateTransferActivity, txnID, validation.SenderWalletID).Get(ctx, nil)
+		if compErr := workflow.ExecuteActivity(ctx, a.CompensateTransferActivity, txnID, validation.SenderWalletID).Get(ctx, nil); compErr != nil {
+			return nil, fmt.Errorf("debit sender failed: %w; compensation also failed: %v", err, compErr)
+		}
 		return nil, err
 	}
 
 	if err := workflow.ExecuteActivity(ctx, a.CreditRecipientActivity, txnID).Get(ctx, nil); err != nil {
-		_ = workflow.ExecuteActivity(ctx, a.CompensateTransferActivity, txnID, validation.SenderWalletID).Get(ctx, nil)
+		if compErr := workflow.ExecuteActivity(ctx, a.CompensateTransferActivity, txnID, validation.SenderWalletID).Get(ctx, nil); compErr != nil {
+			return nil, fmt.Errorf("credit recipient failed: %w; compensation also failed: %v", err, compErr)
+		}
 		return nil, err
 	}
 
