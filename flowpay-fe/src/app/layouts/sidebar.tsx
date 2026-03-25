@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom"
-import { Zap, House, ArrowLeftRight, CalendarClock, CircleUser, LogOut } from "lucide-react"
+import { House, ArrowLeftRight, CalendarClock, CircleUser, LogOut } from "lucide-react"
 import { useAuth } from "@/features/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/primitives/avatar"
 
