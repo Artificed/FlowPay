@@ -36,7 +36,9 @@ func ScheduledPaymentWorkflow(ctx workflow.Context, input ScheduledPaymentWorkfl
 	})
 
 	if delay := input.FirstRunAt.Sub(workflow.Now(ctx)); delay > 0 {
-		_ = workflow.Sleep(ctx, delay)
+		if err := workflow.Sleep(ctx, delay); err != nil {
+			return err
+		}
 	}
 
 	for {
@@ -61,14 +63,20 @@ func ScheduledPaymentWorkflow(ctx workflow.Context, input ScheduledPaymentWorkfl
 		if transferErr != nil {
 			var appErr *temporal.ApplicationError
 			if errors.As(transferErr, &appErr) && appErr.NonRetryable() {
-				_ = workflow.ExecuteActivity(actOpts, a.CancelScheduledPaymentActivity, input.ScheduledPaymentID, appErr.Message()).Get(ctx, nil)
+				if cancelErr := workflow.ExecuteActivity(actOpts, a.CancelScheduledPaymentActivity, input.ScheduledPaymentID, appErr.Message()).Get(ctx, nil); cancelErr != nil {
+					return fmt.Errorf("transfer failed (%s); also failed to cancel scheduled payment: %w", appErr.Message(), cancelErr)
+				}
 				return nil
 			}
 		}
 
 		nextRun := workflow.Now(ctx).Add(time.Duration(input.IntervalDays) * 24 * time.Hour)
-		_ = workflow.ExecuteActivity(actOpts, a.UpdateScheduledPaymentNextRunActivity, input.ScheduledPaymentID, nextRun).Get(ctx, nil)
+		if err := workflow.ExecuteActivity(actOpts, a.UpdateScheduledPaymentNextRunActivity, input.ScheduledPaymentID, nextRun).Get(ctx, nil); err != nil {
+			return fmt.Errorf("update next run: %w", err)
+		}
 
-		_ = workflow.Sleep(ctx, time.Duration(input.IntervalDays)*24*time.Hour)
+		if err := workflow.Sleep(ctx, time.Duration(input.IntervalDays)*24*time.Hour); err != nil {
+			return err
+		}
 	}
 }
