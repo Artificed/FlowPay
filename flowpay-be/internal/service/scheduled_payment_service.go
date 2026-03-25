@@ -61,7 +61,7 @@ func (s *scheduledPaymentService) Create(ctx context.Context, input CreateSchedu
 
 	senderWallet, err := s.walletRepo.FindByUserID(ctx, input.UserID)
 	if err != nil {
-		return nil, ErrRecipientNotFound
+		return nil, ErrSenderWalletNotFound
 	}
 	if senderWallet.ID == recipientWallet.ID {
 		return nil, ErrSelfTransfer

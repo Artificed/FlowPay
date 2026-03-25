@@ -21,6 +21,7 @@ var (
 	ErrSelfTransfer                 = errors.New("cannot transfer to yourself")
 	ErrInvalidAmount                = errors.New("amount must be greater than zero")
 	ErrRecipientNotFound            = errors.New("recipient wallet not found")
+	ErrSenderWalletNotFound         = errors.New("sender wallet not found")
 	ErrTransactionNotReversible     = errors.New("transaction cannot be reversed")
 	ErrNotTransactionSender         = errors.New("only the sender can reverse a transaction")
 	ErrInsufficientFundsForReversal = errors.New("recipient has insufficient funds to reverse this transaction")
