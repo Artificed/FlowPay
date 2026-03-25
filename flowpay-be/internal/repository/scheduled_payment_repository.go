@@ -20,6 +20,7 @@ type ScheduledPaymentRepository interface {
 	UpdateNextRunAt(ctx context.Context, id uuid.UUID, nextRunAt time.Time) error
 	Reactivate(ctx context.Context, id uuid.UUID, workflowID string, nextRunAt time.Time) error
 	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
+	CancelWithReason(ctx context.Context, id uuid.UUID, reason string) error
 }
 
 type scheduledPaymentRepository struct {
@@ -85,6 +86,12 @@ func (r *scheduledPaymentRepository) Reactivate(ctx context.Context, id uuid.UUI
 		"workflow_id": workflowID,
 		"next_run_at": nextRunAt,
 	}).Error
+}
+
+func (r *scheduledPaymentRepository) CancelWithReason(ctx context.Context, id uuid.UUID, reason string) error {
+	return r.db.WithContext(ctx).Model(&models.ScheduledPayment{}).
+		Where("id = ?", id).
+		Updates(map[string]any{"status": models.ScheduledPaymentStatusInactive, "failed_reason": reason}).Error
 }
 
 func (r *scheduledPaymentRepository) IsActive(ctx context.Context, id uuid.UUID) (bool, error) {

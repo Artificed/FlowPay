@@ -45,6 +45,11 @@ export function PaymentRow({ payment, isLast, cancelling, onCancel, reactivating
         <p className="mt-0.5 font-mono text-xs text-zinc-600 truncate">
           → {payment.recipient_wallet_id}
         </p>
+        {isInactive && payment.failed_reason && (
+          <p className="mt-0.5 text-xs text-red-400/80 truncate" title={payment.failed_reason}>
+            Auto-cancelled: {payment.failed_reason}
+          </p>
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-3">

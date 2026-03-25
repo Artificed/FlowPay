@@ -58,6 +58,10 @@ func (a *Activities) CompensateTransferActivity(ctx context.Context, txnID uuid.
 	return wrapBusinessError(err)
 }
 
+func (a *Activities) CancelScheduledPaymentActivity(ctx context.Context, id uuid.UUID, reason string) error {
+	return a.scheduledPaymentRepo.CancelWithReason(ctx, id, reason)
+}
+
 func (a *Activities) CheckScheduledPaymentActiveActivity(ctx context.Context, id uuid.UUID) (bool, error) {
 	return a.scheduledPaymentRepo.IsActive(ctx, id)
 }

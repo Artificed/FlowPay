@@ -24,4 +24,5 @@ type ScheduledPayment struct {
 	NextRunAt         time.Time              `gorm:"not null"          json:"next_run_at"`
 	Status            ScheduledPaymentStatus `gorm:"not null;default:active" json:"status"`
 	WorkflowID        string                 `gorm:"not null;size:255" json:"workflow_id"`
+	FailedReason      *string                `gorm:"size:255"          json:"failed_reason"`
 }

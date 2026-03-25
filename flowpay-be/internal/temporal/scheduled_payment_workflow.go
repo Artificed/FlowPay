@@ -1,6 +1,7 @@
 package temporal
 
 import (
+	"errors"
 	"flowpay-be/internal/service"
 	"fmt"
 	"time"
@@ -48,7 +49,7 @@ func ScheduledPaymentWorkflow(ctx workflow.Context, input ScheduledPaymentWorkfl
 			WorkflowID:            fmt.Sprintf("scheduled-transfer-%s-%d", input.ScheduledPaymentID, workflow.Now(ctx).UnixMilli()),
 			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
 		})
-		_ = workflow.ExecuteChildWorkflow(childCtx, TransferWorkflow, TransferWorkflowInput{
+		transferErr := workflow.ExecuteChildWorkflow(childCtx, TransferWorkflow, TransferWorkflowInput{
 			Input: service.TransferInput{
 				SenderUserID:      input.UserID,
 				RecipientWalletID: input.RecipientWalletID,
@@ -57,6 +58,13 @@ func ScheduledPaymentWorkflow(ctx workflow.Context, input ScheduledPaymentWorkfl
 				Note:              input.Note,
 			},
 		}).Get(ctx, nil)
+		if transferErr != nil {
+			var appErr *temporal.ApplicationError
+			if errors.As(transferErr, &appErr) && appErr.NonRetryable() {
+				_ = workflow.ExecuteActivity(actOpts, a.CancelScheduledPaymentActivity, input.ScheduledPaymentID, appErr.Message()).Get(ctx, nil)
+				return nil
+			}
+		}
 
 		nextRun := workflow.Now(ctx).Add(time.Duration(input.IntervalDays) * 24 * time.Hour)
 		_ = workflow.ExecuteActivity(actOpts, a.UpdateScheduledPaymentNextRunActivity, input.ScheduledPaymentID, nextRun).Get(ctx, nil)

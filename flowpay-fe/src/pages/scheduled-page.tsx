@@ -46,6 +46,11 @@ export default function ScheduledPage() {
     fetchActive().finally(() => setLoading(false))
   }, [fetchActive])
 
+  useEffect(() => {
+    const id = setInterval(fetchActive, 60_000)
+    return () => clearInterval(id)
+  }, [fetchActive])
+
   function handleFilterChange(f: "active" | "inactive") {
     setFilter(f)
     if (f === "inactive" && !inactiveFetched) {

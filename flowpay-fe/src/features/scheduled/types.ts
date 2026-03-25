@@ -11,6 +11,7 @@ export type ScheduledPayment = {
   next_run_at: string
   status: ScheduledPaymentStatus
   workflow_id: string
+  failed_reason?: string | null
   created_at: string
   updated_at: string
 }
