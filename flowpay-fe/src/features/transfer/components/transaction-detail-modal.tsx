@@ -69,7 +69,7 @@ export function TransactionDetailModal({ transaction: txn, walletId, onClose }: 
   }
 
   const senderDisplay = isDeposit
-    ? "Funding source"
+    ? "-"
     : isOutgoing
       ? "You"
       : txn.sender_name || "Unknown wallet"

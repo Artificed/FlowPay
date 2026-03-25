@@ -136,7 +136,7 @@ export default function TransactionsPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-7">
-        <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-white/7 to-white/2 px-7 py-6">
+        <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-white/7 to-white/2 px-8 py-5">
           <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-violet-500/8 blur-3xl" />
           <div className="pointer-events-none absolute -right-8 -bottom-8 size-36 rounded-full bg-indigo-500/6 blur-3xl" />
 
