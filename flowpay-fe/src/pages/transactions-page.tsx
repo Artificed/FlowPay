@@ -134,7 +134,7 @@ export default function TransactionsPage() {
   const isEmpty = !txLoading && filtered.length === 0
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-8">
+    <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-7">
         <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-white/7 to-white/2 px-7 py-6">
           <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-violet-500/8 blur-3xl" />

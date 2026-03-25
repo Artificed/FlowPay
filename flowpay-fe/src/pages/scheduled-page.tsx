@@ -41,7 +41,7 @@ export default function ScheduledPage() {
   const cancelled = payments.filter((p) => p.status === "cancelled")
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-8">
+    <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-white">Scheduled Payments</h1>
         <Button

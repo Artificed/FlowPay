@@ -99,7 +99,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="space-y-4">
           <div className="h-8 w-56 animate-pulse rounded-lg bg-white/5" />
           <div className="grid gap-5 lg:grid-cols-[1fr_272px]">
@@ -114,7 +114,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-10 text-center">
+      <div className="mx-auto max-w-5xl px-6 py-10 text-center">
         <p className="text-sm text-red-400">{error}</p>
         <Button
           variant="outline"
@@ -128,7 +128,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="space-y-5">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>

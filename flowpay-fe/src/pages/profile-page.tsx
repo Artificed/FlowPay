@@ -115,7 +115,7 @@ export default function ProfilePage() {
     : null
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8 space-y-4">
+    <div className="mx-auto max-w-5xl px-6 py-8 space-y-4">
       <div className="mb-4">
         <h1 className="text-[1.4rem] font-semibold text-white">Profile</h1>
         <p className="mt-1 text-sm text-zinc-500">Manage your identity and security</p>
