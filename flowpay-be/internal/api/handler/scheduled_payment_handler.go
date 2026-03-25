@@ -135,11 +135,11 @@ func (h *ScheduledPaymentHandler) List(c *gin.Context) {
 	var statusFilter *models.ScheduledPaymentStatus
 	if s := c.Query("status"); s != "" {
 		switch models.ScheduledPaymentStatus(s) {
-		case models.ScheduledPaymentStatusActive, models.ScheduledPaymentStatusCancelled:
+		case models.ScheduledPaymentStatusActive, models.ScheduledPaymentStatusInactive:
 			v := models.ScheduledPaymentStatus(s)
 			statusFilter = &v
 		default:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "status must be 'active' or 'cancelled'"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "status must be 'active' or 'inactive'"})
 			return
 		}
 	}
@@ -192,4 +192,67 @@ func (h *ScheduledPaymentHandler) Cancel(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// ReactivateScheduledPayment godoc
+// @Summary      Reactivate an inactive scheduled payment
+// @Tags         scheduled-payments
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id path string true "Scheduled Payment ID"
+// @Success      200 {object} models.ScheduledPayment
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Failure      403 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Router       /scheduled-payments/{id}/reactivate [patch]
+func (h *ScheduledPaymentHandler) Reactivate(c *gin.Context) {
+	userID := c.MustGet(middleware.UserIDKey).(uuid.UUID)
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid scheduled payment id"})
+		return
+	}
+
+	sp, err := h.svc.Reactivate(c.Request.Context(), id, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrScheduledPaymentNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "scheduled payment not found"})
+		case errors.Is(err, service.ErrNotScheduledPaymentOwner):
+			c.JSON(http.StatusForbidden, gin.H{"error": "only the owner can reactivate this scheduled payment"})
+		case errors.Is(err, service.ErrScheduledPaymentNotInactive):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "scheduled payment is not inactive"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to reactivate scheduled payment"})
+		}
+		return
+	}
+
+	_, err = h.temporalClient.ExecuteWorkflow(
+		c.Request.Context(),
+		client.StartWorkflowOptions{
+			ID:                    sp.WorkflowID,
+			TaskQueue:             temporalworker.TaskQueue,
+			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+		},
+		temporalworker.ScheduledPaymentWorkflow,
+		temporalworker.ScheduledPaymentWorkflowInput{
+			ScheduledPaymentID: sp.ID,
+			UserID:             sp.UserID,
+			RecipientWalletID:  sp.RecipientWalletID,
+			Amount:             sp.Amount,
+			Currency:           sp.Currency,
+			Note:               sp.Note,
+			IntervalDays:       sp.IntervalDays,
+			FirstRunAt:         sp.NextRunAt,
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start scheduled payment workflow"})
+		return
+	}
+
+	c.JSON(http.StatusOK, sp)
 }

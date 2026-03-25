@@ -82,7 +82,7 @@ export function TransactionDetailModal({ transaction: txn, walletId, onClose }: 
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-sm overflow-hidden rounded-2xl border border-white/8 bg-zinc-950 p-0 shadow-2xl"
+        className="max-w-md overflow-hidden rounded-2xl border border-white/8 bg-zinc-950 p-0 shadow-2xl"
       >
         <div
           className={`pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 size-36 rounded-full blur-3xl opacity-20 ${glowColor}`}

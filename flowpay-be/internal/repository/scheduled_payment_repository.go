@@ -18,6 +18,7 @@ type ScheduledPaymentRepository interface {
 	CountByUserID(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.ScheduledPaymentStatus) error
 	UpdateNextRunAt(ctx context.Context, id uuid.UUID, nextRunAt time.Time) error
+	Reactivate(ctx context.Context, id uuid.UUID, workflowID string, nextRunAt time.Time) error
 	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
@@ -76,6 +77,14 @@ func (r *scheduledPaymentRepository) UpdateStatus(ctx context.Context, id uuid.U
 
 func (r *scheduledPaymentRepository) UpdateNextRunAt(ctx context.Context, id uuid.UUID, nextRunAt time.Time) error {
 	return r.db.WithContext(ctx).Model(&models.ScheduledPayment{}).Where("id = ?", id).Update("next_run_at", nextRunAt).Error
+}
+
+func (r *scheduledPaymentRepository) Reactivate(ctx context.Context, id uuid.UUID, workflowID string, nextRunAt time.Time) error {
+	return r.db.WithContext(ctx).Model(&models.ScheduledPayment{}).Where("id = ?", id).Updates(map[string]any{
+		"status":      models.ScheduledPaymentStatusActive,
+		"workflow_id": workflowID,
+		"next_run_at": nextRunAt,
+	}).Error
 }
 
 func (r *scheduledPaymentRepository) IsActive(ctx context.Context, id uuid.UUID) (bool, error) {

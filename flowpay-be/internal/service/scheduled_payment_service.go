@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	ErrScheduledPaymentNotFound = errors.New("scheduled payment not found")
-	ErrNotScheduledPaymentOwner = errors.New("only the owner can cancel a scheduled payment")
+	ErrScheduledPaymentNotFound    = errors.New("scheduled payment not found")
+	ErrNotScheduledPaymentOwner    = errors.New("only the owner can modify a scheduled payment")
+	ErrScheduledPaymentNotInactive = errors.New("scheduled payment is not inactive")
 )
 
 type CreateScheduledPaymentInput struct {
@@ -32,6 +33,7 @@ type ScheduledPaymentService interface {
 	ListPage(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus, limit, offset int) ([]models.ScheduledPayment, error)
 	Count(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error)
 	Cancel(ctx context.Context, id, userID uuid.UUID) error
+	Reactivate(ctx context.Context, id, userID uuid.UUID) (*models.ScheduledPayment, error)
 	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
@@ -105,7 +107,31 @@ func (s *scheduledPaymentService) Cancel(ctx context.Context, id, userID uuid.UU
 	if sp.UserID != userID {
 		return ErrNotScheduledPaymentOwner
 	}
-	return s.spRepo.UpdateStatus(ctx, id, models.ScheduledPaymentStatusCancelled)
+	return s.spRepo.UpdateStatus(ctx, id, models.ScheduledPaymentStatusInactive)
+}
+
+func (s *scheduledPaymentService) Reactivate(ctx context.Context, id, userID uuid.UUID) (*models.ScheduledPayment, error) {
+	sp, err := s.spRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, ErrScheduledPaymentNotFound
+	}
+	if sp.UserID != userID {
+		return nil, ErrNotScheduledPaymentOwner
+	}
+	if sp.Status != models.ScheduledPaymentStatusInactive {
+		return nil, ErrScheduledPaymentNotInactive
+	}
+
+	newWorkflowID := "scheduled-" + id.String() + "-r-" + uuid.New().String()
+	nextRunAt := time.Now()
+	if err := s.spRepo.Reactivate(ctx, id, newWorkflowID, nextRunAt); err != nil {
+		return nil, err
+	}
+
+	sp.Status = models.ScheduledPaymentStatusActive
+	sp.WorkflowID = newWorkflowID
+	sp.NextRunAt = nextRunAt
+	return sp, nil
 }
 
 func (s *scheduledPaymentService) IsActive(ctx context.Context, id uuid.UUID) (bool, error) {

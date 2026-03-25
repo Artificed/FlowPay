@@ -1,4 +1,4 @@
-export type ScheduledPaymentStatus = "active" | "cancelled"
+export type ScheduledPaymentStatus = "active" | "inactive"
 
 export type ScheduledPayment = {
   id: string

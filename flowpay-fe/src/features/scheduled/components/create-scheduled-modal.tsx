@@ -83,10 +83,10 @@ export default function CreateScheduledModal({ onClose, onSuccess }: Props) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-md rounded-2xl border border-white/8 bg-zinc-900 p-8 shadow-2xl"
+        className="max-w-lg rounded-2xl border border-white/8 bg-zinc-950 p-8 shadow-2xl"
       >
-        <DialogClose className="absolute right-6 top-6 rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-white/5 hover:text-zinc-300">
-          <X className="size-5" />
+        <DialogClose className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-full bg-white/5 text-zinc-500 transition-colors hover:bg-white/10 hover:text-zinc-300">
+          <X className="size-3.5" />
         </DialogClose>
 
         <DialogHeader className="mb-2">
@@ -124,7 +124,7 @@ export default function CreateScheduledModal({ onClose, onSuccess }: Props) {
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="h-10 w-full border-white/10 bg-zinc-800 text-white">
+                    <SelectTrigger className="!h-10 w-full border-white/10 bg-zinc-800 text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

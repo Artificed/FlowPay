@@ -60,6 +60,7 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 			protected.POST("/scheduled-payments", handlers.ScheduledPayment.Create)
 			protected.GET("/scheduled-payments", handlers.ScheduledPayment.List)
 			protected.DELETE("/scheduled-payments/:id", handlers.ScheduledPayment.Cancel)
+			protected.PATCH("/scheduled-payments/:id/reactivate", handlers.ScheduledPayment.Reactivate)
 
 			protected.PUT("/profile/avatar", handlers.User.UpdateAvatar)
 			protected.DELETE("/profile/avatar", handlers.User.RemoveAvatar)

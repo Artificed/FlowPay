@@ -9,8 +9,8 @@ import (
 type ScheduledPaymentStatus string
 
 const (
-	ScheduledPaymentStatusActive    ScheduledPaymentStatus = "active"
-	ScheduledPaymentStatusCancelled ScheduledPaymentStatus = "cancelled"
+	ScheduledPaymentStatusActive   ScheduledPaymentStatus = "active"
+	ScheduledPaymentStatusInactive ScheduledPaymentStatus = "inactive"
 )
 
 type ScheduledPayment struct {

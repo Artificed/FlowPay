@@ -66,7 +66,9 @@ export function TransactionRow({ transaction: txn, walletId, isLast, showStatusB
       </div>
 
       {showStatusBadge && (
-        <Badge className={`hidden shrink-0 sm:inline-flex ${statusStyles[txn.status] ?? statusStyles.pending}`}>
+        <Badge
+          className={`hidden shrink-0 sm:inline-flex w-20 justify-center ${statusStyles[txn.status] ?? statusStyles.pending}`}
+        >
           {txn.status}
         </Badge>
       )}

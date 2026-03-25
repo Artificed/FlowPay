@@ -1,6 +1,5 @@
-import { RefreshCw, Trash2 } from "lucide-react"
+import { RefreshCw, Trash2, RotateCcw } from "lucide-react"
 import type { ScheduledPayment } from "../types"
-import { Badge } from "@/shared/ui/primitives/badge"
 import { formatAmount, formatDate } from "@/shared/lib/formatting"
 
 type RowProps = {
@@ -8,6 +7,8 @@ type RowProps = {
   isLast: boolean
   cancelling: boolean
   onCancel: () => void
+  reactivating?: boolean
+  onReactivate?: () => void
 }
 
 function getNextRunLabel(isoDate: string): string {
@@ -20,13 +21,14 @@ function getNextRunLabel(isoDate: string): string {
   return `in ${diffDays} days`
 }
 
-export function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) {
+export function PaymentRow({ payment, isLast, cancelling, onCancel, reactivating, onReactivate }: RowProps) {
   const isActive = payment.status === "active"
+  const isInactive = payment.status === "inactive"
   const nextRunLabel = isActive ? getNextRunLabel(payment.next_run_at) : null
 
   return (
     <div
-      className={`flex items-start gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${!isLast ? "border-b border-white/5" : ""}`}
+      className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/3 ${!isLast ? "border-b border-white/5" : ""}`}
     >
       <div
         className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
@@ -43,22 +45,6 @@ export function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) 
         <p className="mt-0.5 font-mono text-xs text-zinc-600 truncate">
           → {payment.recipient_wallet_id}
         </p>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="text-xs text-zinc-500">
-            Every {payment.interval_days} {payment.interval_days === 1 ? "day" : "days"}
-          </span>
-          {isActive && nextRunLabel && (
-            <>
-              <span className="text-xs text-zinc-700">·</span>
-              <span
-                className={`text-xs ${nextRunLabel === "Overdue" ? "text-red-400" : nextRunLabel === "Today" ? "text-amber-400" : "text-zinc-500"}`}
-                title={formatDate(payment.next_run_at)}
-              >
-                Next: {nextRunLabel}
-              </span>
-            </>
-          )}
-        </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
@@ -66,15 +52,13 @@ export function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) 
           <p className="text-sm font-medium text-zinc-300">
             {formatAmount(payment.amount, payment.currency)}
           </p>
-          <Badge
-            className={
-              isActive
-                ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"
-                : "bg-zinc-500/10 text-zinc-400 ring-1 ring-zinc-500/20"
-            }
+          <p
+            className={`mt-0.5 text-xs ${nextRunLabel === "Overdue" ? "text-red-400" : nextRunLabel === "Today" ? "text-amber-400" : "text-zinc-500"}`}
+            title={isActive ? formatDate(payment.next_run_at) : undefined}
           >
-            {payment.status}
-          </Badge>
+            Every {payment.interval_days} {payment.interval_days === 1 ? "day" : "days"}
+            {isActive && nextRunLabel && ` · Next: ${nextRunLabel}`}
+          </p>
         </div>
 
         {isActive && (
@@ -85,6 +69,17 @@ export function PaymentRow({ payment, isLast, cancelling, onCancel }: RowProps) 
             title="Cancel payment"
           >
             <Trash2 className="size-4" />
+          </button>
+        )}
+
+        {isInactive && onReactivate && (
+          <button
+            onClick={onReactivate}
+            disabled={reactivating}
+            className="flex size-8 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-emerald-500/10 hover:text-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+            title="Reactivate payment"
+          >
+            <RotateCcw className="size-4" />
           </button>
         )}
       </div>
