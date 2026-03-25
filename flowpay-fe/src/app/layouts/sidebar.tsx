@@ -21,8 +21,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const sidebarContent = (
     <div className="flex h-full w-64 flex-col bg-zinc-950/80 backdrop-blur-xl border-r border-white/5">
       <div className="flex h-16 items-center gap-3 px-5 border-b border-white/5">
-        <div className="flex size-8 items-center justify-center rounded-xl bg-white">
-          <Zap className="size-4 fill-zinc-950 text-zinc-950" />
+        <div className="flex size-7 items-center justify-center rounded-xl">
+          <img src="/logo.png" alt="FlowPay" />
         </div>
         <span className="text-base font-semibold tracking-tight text-white">FlowPay</span>
       </div>
