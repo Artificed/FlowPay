@@ -122,8 +122,12 @@ func (s *transferService) CreateTransaction(ctx context.Context, input TransferI
 
 func createTxnWithRetry(ctx context.Context, tx *gorm.DB, repo repository.TransactionRepository, txn *models.Transaction) error {
 	for range 3 {
-		txn.ReferenceCode = generateReferenceCode()
-		err := repo.Create(ctx, tx, txn)
+		ref, err := generateReferenceCode()
+		if err != nil {
+			return fmt.Errorf("generate reference code: %w", err)
+		}
+		txn.ReferenceCode = ref
+		err = repo.Create(ctx, tx, txn)
 		if err == nil {
 			return nil
 		}
@@ -312,10 +316,10 @@ func (s *transferService) CountTransactions(ctx context.Context, walletID uuid.U
 	return s.txRepo.CountByWallet(ctx, walletID)
 }
 
-func generateReferenceCode() string {
+func generateReferenceCode() (string, error) {
 	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("crypto/rand failed: %v", err))
+		return "", fmt.Errorf("crypto/rand failed: %w", err)
 	}
-	return fmt.Sprintf("FP-%s-%X", time.Now().UTC().Format("20060102"), b)
+	return fmt.Sprintf("FP-%s-%X", time.Now().UTC().Format("20060102"), b), nil
 }
