@@ -11,13 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SendMoneyModal } from "@/features/transfer"
 import { AddFundsModal } from "@/features/wallet"
 import { formatAmount, getGreeting } from "@/shared/lib/formatting"
+import { toast } from "sonner"
 
 export default function HomePage() {
   const { user } = useAuth()
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeCurrency, setActiveCurrency] = useState(0)
   const [showSend, setShowSend] = useState(false)
   const [showDeposit, setShowDeposit] = useState(false)
@@ -33,7 +33,6 @@ export default function HomePage() {
 
   const fetchData = useCallback(async () => {
     try {
-      setError(null)
       const [w, txResult] = await Promise.all([
         walletService.getWallet(),
         transferService.listTransfers({ limit: 20, offset: 0 }),
@@ -44,7 +43,7 @@ export default function HomePage() {
       }
     } catch (err) {
       if (mountedRef.current)
-        setError(err instanceof Error ? err.message : "Failed to load data")
+        toast.error(err instanceof Error ? err.message : "Failed to load data")
     } finally {
       if (mountedRef.current) setLoading(false)
     }
@@ -108,21 +107,6 @@ export default function HomePage() {
           </div>
           <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
         </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="mx-auto max-w-5xl px-6 py-10 text-center">
-        <p className="text-sm text-red-400">{error}</p>
-        <Button
-          variant="outline"
-          className="mt-4 h-9 rounded-full border-white/10 bg-white/5 px-5 text-sm text-white hover:bg-white/10"
-          onClick={fetchData}
-        >
-          Retry
-        </Button>
       </div>
     )
   }

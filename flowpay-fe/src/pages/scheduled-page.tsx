@@ -4,6 +4,7 @@ import { scheduledPaymentService, CreateScheduledModal, PaymentRow } from "@/fea
 import type { ScheduledPayment } from "@/features/scheduled"
 import { Button } from "@/shared/ui/primitives/button"
 import { formatAmount } from "@/shared/lib/formatting"
+import { toast } from "sonner"
 
 const INACTIVE_PAGE_SIZE = 10
 
@@ -66,6 +67,7 @@ export default function ScheduledPage() {
       setInactiveFetched(false)
       if (filter === "inactive") fetchInactive(inactivePage)
     } catch {
+      toast.error("Failed to cancel payment. Please try again.")
     } finally {
       setCancellingId(null)
     }
@@ -79,6 +81,7 @@ export default function ScheduledPage() {
       setInactiveFetched(false)
       fetchInactive(inactivePage)
     } catch {
+      toast.error("Failed to reactivate payment. Please try again.")
     } finally {
       setReactivatingId(null)
     }

@@ -50,8 +50,8 @@ export function streamTransactions(handlers: {
             handlers.onWalletUpdate(JSON.parse(msg.data) as Wallet)
             break
         }
-      } catch {
-
+      } catch (err) {
+        console.error("Failed to parse SSE message", { event: msg.event, data: msg.data, err })
       }
     },
     onerror(err) {

@@ -6,6 +6,7 @@ import type { Wallet } from "@/features/wallet"
 import type { Transaction } from "@/features/transfer"
 import { Button } from "@/shared/ui/primitives/button"
 import { SendMoneyModal } from "@/features/transfer"
+import { toast } from "sonner"
 
 const PAGE_SIZE = 10
 
@@ -73,7 +74,9 @@ export default function TransactionsPage() {
   }, [])
 
   useEffect(() => {
-    walletService.getWallet().then(setWallet).catch(() => { })
+    walletService.getWallet().then(setWallet).catch(() => {
+      toast.error("Failed to load wallet information.")
+    })
   }, [])
 
   useEffect(() => {
