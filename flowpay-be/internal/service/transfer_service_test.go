@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flowpay-be/internal/models"
 	"testing"
+	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
@@ -91,6 +92,10 @@ func (m *mockTxRepo) ListByWallet(_ context.Context, walletID uuid.UUID, limit, 
 
 func (m *mockTxRepo) CountByWallet(_ context.Context, walletID uuid.UUID) (int64, error) {
 	return m.countFn(walletID)
+}
+
+func (m *mockTxRepo) ExportByWallet(_ context.Context, _ uuid.UUID, _ *time.Time) ([]models.Transaction, error) {
+	return nil, nil
 }
 
 func newMockDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {

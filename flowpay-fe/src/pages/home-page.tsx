@@ -274,7 +274,7 @@ export default function HomePage() {
       </div>
 
       {showSend && (
-        <SendMoneyModal onClose={() => setShowSend(false)} onSuccess={fetchData} onFail={() => { }} />
+        <SendMoneyModal onClose={() => setShowSend(false)} onSuccess={fetchData} />
       )}
       {showDeposit && (
         <AddFundsModal onClose={() => setShowDeposit(false)} onSuccess={fetchData} />

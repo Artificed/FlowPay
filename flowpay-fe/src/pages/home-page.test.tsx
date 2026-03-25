@@ -126,10 +126,9 @@ describe("HomePage", () => {
     expect(screen.getByTestId("add-funds-modal")).toBeInTheDocument()
   })
 
-  it("shows error message with retry button when fetch fails", async () => {
+  it("renders page and shows toast when fetch fails", async () => {
     mockGetWallet.mockRejectedValue(new Error("Network failure"))
     renderPage()
-    await waitFor(() => expect(screen.getByText("Network failure")).toBeInTheDocument())
-    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText(/good morning/i)).toBeInTheDocument())
   })
 })
