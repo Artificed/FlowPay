@@ -4,3 +4,5 @@ vendor
 .git
 .gitignore
 .air.toml
+.env
+.env*
