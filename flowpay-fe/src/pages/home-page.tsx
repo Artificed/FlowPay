@@ -78,9 +78,7 @@ export default function HomePage() {
     onWalletUpdate(w) {
       setWallet(w)
     },
-    onError(err) {
-      console.error("SSE error:", err)
-    },
+    onError() { },
   })
 
   const firstName = user?.display_name.split(" ")[0] ?? ""

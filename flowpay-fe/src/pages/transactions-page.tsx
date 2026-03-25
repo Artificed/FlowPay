@@ -100,9 +100,7 @@ export default function TransactionsPage() {
     onWalletUpdate(w) {
       setWallet(w)
     },
-    onError(err) {
-      console.error("SSE error:", err)
-    },
+    onError() { },
   })
 
   const goToPage = useCallback(
