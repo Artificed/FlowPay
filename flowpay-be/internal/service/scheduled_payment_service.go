@@ -123,7 +123,7 @@ func (s *scheduledPaymentService) Reactivate(ctx context.Context, id, userID uui
 	}
 
 	newWorkflowID := "scheduled-" + id.String() + "-r-" + uuid.New().String()
-	nextRunAt := time.Now()
+	nextRunAt := time.Now().Add(time.Duration(sp.IntervalDays) * 24 * time.Hour)
 	if err := s.spRepo.Reactivate(ctx, id, newWorkflowID, nextRunAt); err != nil {
 		return nil, err
 	}
