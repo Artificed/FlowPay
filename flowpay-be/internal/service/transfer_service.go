@@ -51,6 +51,7 @@ type TransferService interface {
 	GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error)
 	ListTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
 	CountTransactions(ctx context.Context, walletID uuid.UUID) (int64, error)
+	ExportTransactions(ctx context.Context, walletID uuid.UUID, since *time.Time) ([]models.Transaction, error)
 }
 
 type transferService struct {
@@ -315,6 +316,10 @@ func (s *transferService) ListTransactions(ctx context.Context, walletID uuid.UU
 
 func (s *transferService) CountTransactions(ctx context.Context, walletID uuid.UUID) (int64, error) {
 	return s.txRepo.CountByWallet(ctx, walletID)
+}
+
+func (s *transferService) ExportTransactions(ctx context.Context, walletID uuid.UUID, since *time.Time) ([]models.Transaction, error) {
+	return s.txRepo.ExportByWallet(ctx, walletID, since)
 }
 
 func generateReferenceCode() (string, error) {

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"flowpay-be/internal/models"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -13,6 +14,7 @@ type TransactionRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Transaction, error)
 	ListByWallet(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
 	CountByWallet(ctx context.Context, walletID uuid.UUID) (int64, error)
+	ExportByWallet(ctx context.Context, walletID uuid.UUID, since *time.Time) ([]models.Transaction, error)
 	UpdateStatus(ctx context.Context, tx *gorm.DB, id uuid.UUID, status models.TransactionStatus) error
 }
 
@@ -122,6 +124,18 @@ func (r *transactionRepository) CountByWallet(ctx context.Context, walletID uuid
 		return 0, err
 	}
 	return count, nil
+}
+
+func (r *transactionRepository) ExportByWallet(ctx context.Context, walletID uuid.UUID, since *time.Time) ([]models.Transaction, error) {
+	q := walletScope(r.db.WithContext(ctx), walletID).Order("created_at ASC")
+	if since != nil {
+		q = q.Where("created_at >= ?", since)
+	}
+	var transactions []models.Transaction
+	if err := q.Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return r.enrichNames(ctx, transactions)
 }
 
 func (r *transactionRepository) UpdateStatus(ctx context.Context, tx *gorm.DB, id uuid.UUID, status models.TransactionStatus) error {

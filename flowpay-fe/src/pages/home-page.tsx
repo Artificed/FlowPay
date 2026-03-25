@@ -53,6 +53,20 @@ export default function HomePage() {
     fetchData()
   }, [fetchData])
 
+  async function handleExport() {
+    try {
+      const blob = await transferService.exportTransactions({ range: filterRange, currency: activeCurrencyCode })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `flowpay-transactions-${new Date().toISOString().slice(0, 10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error("Failed to export transactions.")
+    }
+  }
+
   useSSETransactions({
     onTransactionUpdate(updated) {
       setTransactions((prev) => {
@@ -135,8 +149,7 @@ export default function HomePage() {
             </Select>
             <Button
               variant="outline"
-              onClick={() => {
-              }}
+              onClick={handleExport}
               className="h-9 gap-1.5 rounded-full border-white/8 bg-white/4 px-4 text-zinc-400 hover:bg-white/8 hover:text-zinc-400"
             >
               <Download className="size-3.5" />

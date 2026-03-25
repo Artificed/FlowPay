@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"encoding/csv"
 	"errors"
 	"flowpay-be/internal/api/middleware"
 	"flowpay-be/internal/currency"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/service"
 	temporalworker "flowpay-be/internal/temporal"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -337,6 +339,91 @@ func (h *TransferHandler) StreamTransactions(c *gin.Context) {
 			flusher.Flush()
 		}
 	}
+}
+
+// ExportTransfers godoc
+// @Summary      Export transactions as CSV
+// @Tags         transfers
+// @Produce      text/csv
+// @Security     BearerAuth
+// @Param        range    query string false "Time range: 1d, 7d, 30d (default: all)"
+// @Param        currency query string false "Filter by currency code (e.g. USD)"
+// @Success      200 {string} string "CSV file"
+// @Failure      401 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Router       /transfers/export [get]
+func (h *TransferHandler) ExportTransfers(c *gin.Context) {
+	userID := c.MustGet(middleware.UserIDKey).(uuid.UUID)
+
+	var since *time.Time
+	switch c.Query("range") {
+	case "1d":
+		t := time.Now().UTC().Add(-24 * time.Hour)
+		since = &t
+	case "7d":
+		t := time.Now().UTC().AddDate(0, 0, -7)
+		since = &t
+	case "30d":
+		t := time.Now().UTC().AddDate(0, 0, -30)
+		since = &t
+	}
+
+	currencyFilter := c.Query("currency")
+
+	wallet, err := h.walletSvc.GetWallet(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "wallet not found"})
+		return
+	}
+
+	txns, err := h.transferSvc.ExportTransactions(c.Request.Context(), wallet.ID, since)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to export transactions"})
+		return
+	}
+
+	if currencyFilter != "" {
+		filtered := txns[:0]
+		for _, t := range txns {
+			if t.Currency == currencyFilter {
+				filtered = append(filtered, t)
+			}
+		}
+		txns = filtered
+	}
+
+	filename := fmt.Sprintf("flowpay-transactions-%s.csv", time.Now().UTC().Format("2006-01-02"))
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+
+	w := csv.NewWriter(c.Writer)
+	_ = w.Write([]string{"Date", "Type", "Amount", "Currency", "Status", "Note", "Reference", "Sender", "Recipient"})
+	for _, t := range txns {
+		sender := ""
+		if t.SenderName != nil {
+			sender = *t.SenderName
+		} else if t.SenderWalletID != nil {
+			sender = t.SenderWalletID.String()
+		}
+		recipient := ""
+		if t.RecipientName != nil {
+			recipient = *t.RecipientName
+		} else {
+			recipient = t.RecipientWalletID.String()
+		}
+		_ = w.Write([]string{
+			t.CreatedAt.UTC().Format(time.RFC3339),
+			string(t.Type),
+			fmt.Sprintf("%d", t.Amount),
+			t.Currency,
+			string(t.Status),
+			t.Note,
+			t.ReferenceCode,
+			sender,
+			recipient,
+		})
+	}
+	w.Flush()
 }
 
 // GetTransfer godoc

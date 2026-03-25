@@ -18,6 +18,11 @@ export const transferService = {
 
   getTransfer: (id: string) =>
     apiClient.get<Transaction>(`/transfers/${id}`).then((r) => r.data),
+
+  exportTransactions: (params: { range: string; currency: string }) =>
+    apiClient
+      .get("/transfers/export", { params, responseType: "blob" })
+      .then((r) => r.data as Blob),
 }
 
 export function streamTransactions(handlers: {

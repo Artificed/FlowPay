@@ -54,6 +54,7 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 			protected.POST("/transfers", handlers.Transfer.CreateTransfer)
 			protected.GET("/transfers", handlers.Transfer.ListTransfers)
 			protected.GET("/transfers/stream", handlers.Transfer.StreamTransactions)
+			protected.GET("/transfers/export", handlers.Transfer.ExportTransfers)
 			protected.GET("/transfers/:id", handlers.Transfer.GetTransfer)
 			protected.POST("/transfers/:id/reverse", handlers.Transfer.ReverseTransfer)
 
