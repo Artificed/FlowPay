@@ -3,7 +3,7 @@ import { render, screen, act } from "@testing-library/react"
 import { AuthProvider, useAuth } from "./auth-provider"
 import type { AuthResult } from "@/features/auth/types"
 
-const mockUser = { id: "u1", email: "dummy@google.com", display_name: "Dummy", created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" }
+const mockUser = { id: "u1", email: "dummy@google.com", display_name: "Dummy", avatar_url: null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" }
 const mockResult: AuthResult = { token: "tok-123", user: mockUser }
 
 function TestConsumer() {
