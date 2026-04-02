@@ -134,8 +134,10 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 ## Screenshots
 
 <img width="1920" height="999" alt="FlowPay - Login" src="https://github.com/user-attachments/assets/bf11c2d2-1d46-430d-b2f3-f25ab1a8a0ec" />
-<img width="1920" height="999" alt="FlowPay - Transactions" src="https://github.com/user-attachments/assets/ca20feb6-f43a-4d38-8e72-c2fb9508c55f" />
-<img width="1920" height="998" alt="FlowPay - Transfer" src="https://github.com/user-attachments/assets/f3e9d058-ba3e-48bb-93f3-f5b81cb586e4" />
+<img width="1511" height="867" alt="FlowPay - Dashboard" src="https://github.com/user-attachments/assets/793305d3-81e1-4aee-a55e-e2796f9ac93f" />
+<img width="1511" height="867" alt="FlowPay - Transactions" src="https://github.com/user-attachments/assets/a4d3e71e-95fe-426e-bb19-55bb1ebcdc39" />
+<img width="1511" height="866" alt="FlowPay - Scheduled Transactions" src="https://github.com/user-attachments/assets/4d095eb5-4554-4228-a80d-e126aa36888a" />
+<img width="1510" height="864" alt="FlowPay - Profile" src="https://github.com/user-attachments/assets/5177a4ac-bcd5-40f6-9eb3-d5656c53003c" />
 <img width="1920" height="999" alt="FlowPay - Workflows" src="https://github.com/user-attachments/assets/a67a5f81-7690-4556-b897-660bd61cb2d0" />
 <img width="1920" height="999" alt="FlowPay - Workflow Detail" src="https://github.com/user-attachments/assets/64f4cc2f-c0a4-44e2-bf71-6cc1b7f7d3de" />
 
