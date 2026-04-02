@@ -13,7 +13,7 @@ function buildChartData(transactions: Transaction[], walletId: string, filterRan
     }
     const startOfToday = new Date(now)
     startOfToday.setHours(0, 0, 0, 0)
-    for (const txn of transactions.filter((t) => t.currency === currency)) {
+    for (const txn of transactions.filter((t) => t.currency === currency && t.status === "completed")) {
       const d = new Date(txn.created_at)
       if (d < startOfToday) continue
       const slotHour = Math.floor(d.getHours() / 2) * 2
@@ -38,7 +38,7 @@ function buildChartData(transactions: Transaction[], walletId: string, filterRan
     days[label] = { date: label, inflow: 0, outflow: 0 }
   }
 
-  for (const txn of transactions.filter((t) => t.currency === currency)) {
+  for (const txn of transactions.filter((t) => t.currency === currency && t.status === "completed")) {
     const d = new Date(txn.created_at)
     const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
     if (!(label in days)) continue
