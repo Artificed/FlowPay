@@ -14,18 +14,23 @@ type Props = {
 export function TransactionRow({ transaction: txn, walletId, isLast, showStatusBadge, onClick }: Props) {
   const isDeposit = txn.type === "deposit"
   const isOutgoing = !isDeposit && walletId != null && txn.sender_wallet_id === walletId
+  const isFailed = txn.status === "failed"
 
-  const accentBar = isDeposit
-    ? "bg-indigo-500/60"
-    : isOutgoing
-      ? "bg-zinc-700"
-      : "bg-emerald-500/60"
+  const accentBar = isFailed
+    ? "bg-red-500/60"
+    : isDeposit
+      ? "bg-indigo-500/60"
+      : isOutgoing
+        ? "bg-zinc-700"
+        : "bg-emerald-500/60"
 
-  const iconBg = isDeposit
-    ? "bg-indigo-500/10 text-indigo-400"
-    : isOutgoing
-      ? "bg-zinc-800 text-zinc-400"
-      : "bg-emerald-500/10 text-emerald-400"
+  const iconBg = isFailed
+    ? "bg-red-500/10 text-red-400"
+    : isDeposit
+      ? "bg-indigo-500/10 text-indigo-400"
+      : isOutgoing
+        ? "bg-zinc-800 text-zinc-400"
+        : "bg-emerald-500/10 text-emerald-400"
 
   return (
     <div
@@ -58,7 +63,7 @@ export function TransactionRow({ transaction: txn, walletId, isLast, showStatusB
       </div>
 
       <div className="text-right">
-        <p className={`text-sm font-medium ${isOutgoing ? "text-zinc-300" : "text-emerald-400"}`}>
+        <p className={`text-sm font-medium ${isFailed ? "text-red-400" : isOutgoing ? "text-zinc-300" : "text-emerald-400"}`}>
           {isOutgoing ? "−" : "+"}
           {formatAmount(txn.amount, txn.currency)}
         </p>
