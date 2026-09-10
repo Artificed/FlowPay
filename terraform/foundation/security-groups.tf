@@ -112,3 +112,31 @@ resource "aws_vpc_security_group_ingress_rule" "rds_from_temporal" {
   to_port                      = 5432
   ip_protocol                  = "tcp"
 }
+
+resource "aws_security_group" "vpc_endpoints" {
+  name        = "${var.project}-vpc-endpoints"
+  description = "Interface VPC endpoints"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project}-vpc-endpoints"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "endpoints_from_app" {
+  security_group_id            = aws_security_group.vpc_endpoints.id
+  description                  = "HTTPS from the backend tasks"
+  referenced_security_group_id = aws_security_group.app.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "endpoints_from_temporal" {
+  security_group_id            = aws_security_group.vpc_endpoints.id
+  description                  = "HTTPS from the Temporal server"
+  referenced_security_group_id = aws_security_group.temporal.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
