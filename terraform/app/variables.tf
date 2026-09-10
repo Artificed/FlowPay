@@ -15,3 +15,27 @@ variable "use_nat_gateway" {
   type        = bool
   default     = false
 }
+
+variable "db_instance_class" {
+  description = "RDS instance class."
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "Storage in GB. 20 is the minimum for gp3."
+  type        = number
+  default     = 20
+}
+
+variable "db_engine_version" {
+  description = "PostgreSQL major version, matching the compose stack."
+  type        = string
+  default     = "17"
+}
+
+variable "db_multi_az" {
+  description = "Run a standby in a second AZ. Off because the stack is destroyed between demos."
+  type        = bool
+  default     = false
+}

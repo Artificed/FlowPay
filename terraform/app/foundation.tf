@@ -17,4 +17,5 @@ locals {
   public_subnet_ids      = local.foundation.public_subnet_ids
   endpoint_sg_id         = local.foundation.vpc_endpoint_security_group_id
   private_route_table_id = local.foundation.private_route_table_id
+  rds_security_group_id  = local.foundation.rds_security_group_id
 }
