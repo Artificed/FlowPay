@@ -20,4 +20,5 @@ locals {
   rds_security_group_id  = local.foundation.rds_security_group_id
   alb_security_group_id  = local.foundation.alb_security_group_id
   api_certificate_arn    = local.foundation.api_certificate_arn
+  zone_id                = local.foundation.zone_id
 }
