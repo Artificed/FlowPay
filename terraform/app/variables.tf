@@ -51,3 +51,9 @@ variable "backend_port" {
   type        = number
   default     = 8080
 }
+
+variable "cloudfront_price_class" {
+  description = "Which edge locations to use. All is the full network."
+  type        = string
+  default     = "PriceClass_All"
+}
