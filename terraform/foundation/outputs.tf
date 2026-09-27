@@ -57,3 +57,23 @@ output "vpc_endpoint_security_group_id" {
   description = "Security group for the interface endpoints built in the app layer."
   value       = aws_security_group.vpc_endpoints.id
 }
+
+output "zone_id" {
+  description = "Route 53 hosted zone for the domain."
+  value       = aws_route53_zone.main.zone_id
+}
+
+output "nameservers" {
+  description = "Nameservers to set at the domain registrar."
+  value       = aws_route53_zone.main.name_servers
+}
+
+output "api_certificate_arn" {
+  description = "Issued ACM certificate for the API, in the foundation region."
+  value       = aws_acm_certificate_validation.api.certificate_arn
+}
+
+output "site_certificate_arn" {
+  description = "Issued ACM certificate for the site, in us-east-1 for CloudFront."
+  value       = aws_acm_certificate_validation.site.certificate_arn
+}
