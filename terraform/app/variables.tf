@@ -39,3 +39,15 @@ variable "db_multi_az" {
   type        = bool
   default     = false
 }
+
+variable "alb_idle_timeout" {
+  description = "Seconds an idle connection is held open. High for the SSE stream endpoint."
+  type        = number
+  default     = 4000
+}
+
+variable "backend_port" {
+  description = "Port the backend container listens on."
+  type        = number
+  default     = 8080
+}
