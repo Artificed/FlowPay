@@ -67,3 +67,13 @@ output "nameservers" {
   description = "Nameservers to set at the domain registrar."
   value       = aws_route53_zone.main.name_servers
 }
+
+output "api_certificate_arn" {
+  description = "Issued ACM certificate for the API, in the foundation region."
+  value       = aws_acm_certificate_validation.api.certificate_arn
+}
+
+output "site_certificate_arn" {
+  description = "Issued ACM certificate for the site, in us-east-1 for CloudFront."
+  value       = aws_acm_certificate_validation.site.certificate_arn
+}
