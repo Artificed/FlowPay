@@ -38,6 +38,7 @@ func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.E
 	v1 := r.Group("/api")
 	{
 		v1.GET("/health", handlers.Health.Health)
+		v1.GET("/ready", handlers.Health.Ready)
 		v1.GET("/currencies", handler.GetCurrencies)
 
 		auth := v1.Group("/auth")

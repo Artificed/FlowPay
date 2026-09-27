@@ -157,15 +157,6 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
-                    },
-                    "503": {
-                        "description": "Service Unavailable",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
                     }
                 }
             }
@@ -301,6 +292,37 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/ready": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Readiness check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
@@ -459,6 +481,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/scheduled-payments/{id}/reactivate": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scheduled-payments"
+                ],
+                "summary": "Reactivate an inactive scheduled payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Scheduled Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ScheduledPayment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/transfers": {
             "get": {
                 "security": [
@@ -560,6 +651,62 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "Unprocessable Entity",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transfers/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "transfers"
+                ],
+                "summary": "Export transactions as CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Time range: 1d, 7d, 30d (default: all)",
+                        "name": "range",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by currency code (e.g. USD)",
+                        "name": "currency",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CSV file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -966,6 +1113,9 @@ const docTemplate = `{
                 "currency": {
                     "type": "string"
                 },
+                "failed_reason": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -999,11 +1149,11 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "active",
-                "cancelled"
+                "inactive"
             ],
             "x-enum-varnames": [
                 "ScheduledPaymentStatusActive",
-                "ScheduledPaymentStatusCancelled"
+                "ScheduledPaymentStatusInactive"
             ]
         },
         "models.Transaction": {
@@ -1027,10 +1177,16 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "recipient_name": {
+                    "type": "string"
+                },
                 "recipient_wallet_id": {
                     "type": "string"
                 },
                 "reference_code": {
+                    "type": "string"
+                },
+                "sender_name": {
                     "type": "string"
                 },
                 "sender_wallet_id": {
