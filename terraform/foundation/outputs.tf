@@ -57,3 +57,13 @@ output "vpc_endpoint_security_group_id" {
   description = "Security group for the interface endpoints built in the app layer."
   value       = aws_security_group.vpc_endpoints.id
 }
+
+output "zone_id" {
+  description = "Route 53 hosted zone for the domain."
+  value       = aws_route53_zone.main.zone_id
+}
+
+output "nameservers" {
+  description = "Nameservers to set at the domain registrar."
+  value       = aws_route53_zone.main.name_servers
+}

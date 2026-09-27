@@ -33,3 +33,9 @@ variable "temporal_port" {
   type        = number
   default     = 7233
 }
+
+variable "domain" {
+  description = "Domain the site and API are served under."
+  type        = string
+  default     = "flowpay.my.id"
+}
