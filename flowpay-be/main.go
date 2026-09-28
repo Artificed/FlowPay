@@ -74,7 +74,9 @@ func main() {
 	scheduledPaymentSvc := service.NewScheduledPaymentService(walletRepo, spRepo)
 	userSvc := service.NewUserService(userRepo, storageSvc)
 
-	temporalClient, err := temporalworker.NewClient(cfg.TemporalAddress)
+	dialCtx, cancelDial := context.WithTimeout(context.Background(), 5*time.Minute)
+	temporalClient, err := temporalworker.NewClient(dialCtx, cfg.TemporalAddress)
+	cancelDial()
 	if err != nil {
 		slog.Error("temporal: connect failed", "error", err)
 		os.Exit(1)
