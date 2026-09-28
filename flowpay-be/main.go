@@ -46,7 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := database.RunMigrations(cfg.MigrationURL()); err != nil {
+	if err := database.RunMigrations(cfg.DatabaseURL); err != nil {
 		slog.Error("database: migrations failed", "error", err)
 		os.Exit(1)
 	}

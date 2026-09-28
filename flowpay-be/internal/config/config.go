@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"strconv"
@@ -15,7 +15,6 @@ type Config struct {
 	JWTExpiryHours  int
 	TemporalAddress string
 	CORSOrigins     []string
-	migrationURL    string
 	MinioEndpoint   string
 	MinioPublicURL  string
 	MinioAccessKey  string
@@ -32,17 +31,16 @@ func Load() *Config {
 	sslMode := getEnv("DB_SSLMODE", "disable")
 	sslRootCert := getEnv("DB_SSLROOTCERT", "")
 
-	dsn := fmt.Sprintf(
-		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s TimeZone=UTC",
-		host, port, name, user, password, sslMode,
-	)
-	migrationURL := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		user, password, host, port, name, sslMode,
-	)
+	query := url.Values{"sslmode": {sslMode}, "TimeZone": {"UTC"}}
 	if sslRootCert != "" {
-		dsn += " sslrootcert=" + sslRootCert
-		migrationURL += "&sslrootcert=" + url.QueryEscape(sslRootCert)
+		query.Set("sslrootcert", sslRootCert)
+	}
+	databaseURL := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(user, password),
+		Host:     net.JoinHostPort(host, port),
+		Path:     name,
+		RawQuery: query.Encode(),
 	}
 
 	jwtExpiry, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
@@ -53,23 +51,18 @@ func Load() *Config {
 	corsOrigins := strings.Split(getEnv("CORS_ORIGINS", "http://localhost:5173,http://localhost"), ",")
 
 	return &Config{
-		DatabaseURL:     dsn,
+		DatabaseURL:     databaseURL.String(),
 		Port:            getEnv("PORT", "8080"),
 		JWTSecret:       getEnv("JWT_SECRET", ""),
 		JWTExpiryHours:  jwtExpiry,
 		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
 		CORSOrigins:     corsOrigins,
-		migrationURL:    migrationURL,
 		MinioEndpoint:   getEnv("MINIO_ENDPOINT", "minio:9000"),
 		MinioPublicURL:  getEnv("MINIO_PUBLIC_URL", "http://localhost:9000"),
 		MinioAccessKey:  getEnv("MINIO_ACCESS_KEY", ""),
 		MinioSecretKey:  getEnv("MINIO_SECRET_KEY", ""),
 		MinioBucket:     getEnv("MINIO_BUCKET", "flowpay"),
 	}
-}
-
-func (c *Config) MigrationURL() string {
-	return c.migrationURL
 }
 
 func getEnv(key, fallback string) string {
