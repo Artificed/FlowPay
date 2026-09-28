@@ -2,7 +2,7 @@ import axios from "axios"
 
 const TOKEN_KEY = "flowpay_token"
 
-export const BASE_URL = "/api"
+export const BASE_URL = import.meta.env.VITE_API_URL || "/api"
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,

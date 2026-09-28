@@ -15,6 +15,7 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 
+COPY certs/rds-ap-southeast-3-bundle.pem certs/
 COPY --from=builder /app/server .
 
 EXPOSE 8080
