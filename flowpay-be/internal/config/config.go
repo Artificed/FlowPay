@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -29,11 +30,20 @@ func Load() *Config {
 	user := getEnv("DB_USER", "flowpay")
 	password := getEnv("DB_PASSWORD", "flowpay")
 	sslMode := getEnv("DB_SSLMODE", "disable")
+	sslRootCert := getEnv("DB_SSLROOTCERT", "")
 
 	dsn := fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s TimeZone=UTC",
 		host, port, name, user, password, sslMode,
 	)
+	migrationURL := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		user, password, host, port, name, sslMode,
+	)
+	if sslRootCert != "" {
+		dsn += " sslrootcert=" + sslRootCert
+		migrationURL += "&sslrootcert=" + url.QueryEscape(sslRootCert)
+	}
 
 	jwtExpiry, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
 	if err != nil {
@@ -49,15 +59,12 @@ func Load() *Config {
 		JWTExpiryHours:  jwtExpiry,
 		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
 		CORSOrigins:     corsOrigins,
-		migrationURL: fmt.Sprintf(
-			"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-			user, password, host, port, name, sslMode,
-		),
-		MinioEndpoint:  getEnv("MINIO_ENDPOINT", "minio:9000"),
-		MinioPublicURL: getEnv("MINIO_PUBLIC_URL", "http://localhost:9000"),
-		MinioAccessKey: getEnv("MINIO_ACCESS_KEY", ""),
-		MinioSecretKey: getEnv("MINIO_SECRET_KEY", ""),
-		MinioBucket:    getEnv("MINIO_BUCKET", "flowpay"),
+		migrationURL:    migrationURL,
+		MinioEndpoint:   getEnv("MINIO_ENDPOINT", "minio:9000"),
+		MinioPublicURL:  getEnv("MINIO_PUBLIC_URL", "http://localhost:9000"),
+		MinioAccessKey:  getEnv("MINIO_ACCESS_KEY", ""),
+		MinioSecretKey:  getEnv("MINIO_SECRET_KEY", ""),
+		MinioBucket:     getEnv("MINIO_BUCKET", "flowpay"),
 	}
 }
 
