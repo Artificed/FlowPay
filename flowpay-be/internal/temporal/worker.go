@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/worker"
 )
 
@@ -16,6 +17,7 @@ func NewClient(ctx context.Context, address string) (client.Client, error) {
 	for {
 		c, err := client.DialContext(ctx, client.Options{
 			HostPort: address,
+			Logger:   log.NewStructuredLogger(slog.Default()),
 		})
 		if err == nil {
 			return c, nil
