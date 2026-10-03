@@ -42,12 +42,12 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   origin {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
-    origin_id                = "s3"
+    origin_id                = "frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
   default_cache_behavior {
-    target_origin_id       = "s3"
+    target_origin_id       = "frontend"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
