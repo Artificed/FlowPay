@@ -63,7 +63,7 @@ func Load() *Config {
 		StorageEndpoint:     getEnv("STORAGE_ENDPOINT", "minio:9000"),
 		StorageRegion:       getEnv("STORAGE_REGION", "us-east-1"),
 		StorageUseSSL:       getEnvBool("STORAGE_USE_SSL", false),
-		StoragePublicURL:    getEnv("STORAGE_PUBLIC_URL", "http://localhost:9000"),
+		StoragePublicURL:    getEnv("STORAGE_PUBLIC_URL", "http://localhost:9000/flowpay"),
 		StorageAccessKey:    getEnv("STORAGE_ACCESS_KEY", ""),
 		StorageSecretKey:    getEnv("STORAGE_SECRET_KEY", ""),
 		StorageBucket:       getEnv("STORAGE_BUCKET", "flowpay"),

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -41,7 +42,7 @@ func NewStorageService(opts Options) (*StorageService, error) {
 	if err != nil {
 		return nil, fmt.Errorf("storage: create client: %w", err)
 	}
-	return &StorageService{client: client, bucket: opts.Bucket, publicURL: opts.PublicURL}, nil
+	return &StorageService{client: client, bucket: opts.Bucket, publicURL: strings.TrimSuffix(opts.PublicURL, "/")}, nil
 }
 
 func (s *StorageService) EnsureBucket(ctx context.Context) error {
@@ -95,5 +96,5 @@ func (s *StorageService) DeleteObject(ctx context.Context, key string) error {
 }
 
 func (s *StorageService) PublicURL(key string) string {
-	return fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucket, key)
+	return s.publicURL + "/" + key
 }
