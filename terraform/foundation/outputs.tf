@@ -77,3 +77,18 @@ output "site_certificate_arn" {
   description = "Issued ACM certificate for the site, in us-east-1 for CloudFront."
   value       = aws_acm_certificate_validation.site.certificate_arn
 }
+
+output "avatars_bucket_name" {
+  description = "S3 bucket holding user avatars."
+  value       = aws_s3_bucket.avatars.id
+}
+
+output "avatars_bucket_arn" {
+  description = "ARN of the avatars bucket, for its bucket policy and the backend task role."
+  value       = aws_s3_bucket.avatars.arn
+}
+
+output "avatars_bucket_regional_domain_name" {
+  description = "Regional domain name of the avatars bucket, for the CloudFront origin."
+  value       = aws_s3_bucket.avatars.bucket_regional_domain_name
+}
