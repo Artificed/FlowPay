@@ -58,7 +58,15 @@ func main() {
 	txRepo := repository.NewTransactionRepository(db)
 	spRepo := repository.NewScheduledPaymentRepository(db)
 
-	storageSvc, err := storage.NewStorageService(cfg.StorageEndpoint, cfg.StorageAccessKey, cfg.StorageSecretKey, cfg.StorageBucket, cfg.StoragePublicURL, false)
+	storageSvc, err := storage.NewStorageService(storage.Options{
+		Endpoint:  cfg.StorageEndpoint,
+		Region:    cfg.StorageRegion,
+		UseSSL:    cfg.StorageUseSSL,
+		Bucket:    cfg.StorageBucket,
+		PublicURL: cfg.StoragePublicURL,
+		AccessKey: cfg.StorageAccessKey,
+		SecretKey: cfg.StorageSecretKey,
+	})
 	if err != nil {
 		slog.Error("storage: create client failed", "error", err)
 		os.Exit(1)

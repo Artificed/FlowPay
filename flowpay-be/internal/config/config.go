@@ -16,6 +16,8 @@ type Config struct {
 	TemporalAddress  string
 	CORSOrigins      []string
 	StorageEndpoint  string
+	StorageRegion    string
+	StorageUseSSL    bool
 	StoragePublicURL string
 	StorageAccessKey string
 	StorageSecretKey string
@@ -58,6 +60,8 @@ func Load() *Config {
 		TemporalAddress:  getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
 		CORSOrigins:      corsOrigins,
 		StorageEndpoint:  getEnv("STORAGE_ENDPOINT", "minio:9000"),
+		StorageRegion:    getEnv("STORAGE_REGION", "us-east-1"),
+		StorageUseSSL:    getEnvBool("STORAGE_USE_SSL", false),
 		StoragePublicURL: getEnv("STORAGE_PUBLIC_URL", "http://localhost:9000"),
 		StorageAccessKey: getEnv("STORAGE_ACCESS_KEY", ""),
 		StorageSecretKey: getEnv("STORAGE_SECRET_KEY", ""),
@@ -70,4 +74,12 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	v, err := strconv.ParseBool(os.Getenv(key))
+	if err != nil {
+		return fallback
+	}
+	return v
 }

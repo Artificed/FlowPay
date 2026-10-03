@@ -17,15 +17,31 @@ type StorageService struct {
 	publicURL string
 }
 
-func NewStorageService(endpoint, accessKey, secretKey, bucket, publicURL string, useSSL bool) (*StorageService, error) {
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: useSSL,
+type Options struct {
+	Endpoint  string
+	Region    string
+	UseSSL    bool
+	Bucket    string
+	PublicURL string
+	AccessKey string
+	SecretKey string
+}
+
+func NewStorageService(opts Options) (*StorageService, error) {
+	creds := credentials.NewChainCredentials([]credentials.Provider{&credentials.EnvAWS{}, &credentials.IAM{}})
+	if opts.AccessKey != "" {
+		creds = credentials.NewStaticV4(opts.AccessKey, opts.SecretKey, "")
+	}
+
+	client, err := minio.New(opts.Endpoint, &minio.Options{
+		Creds:  creds,
+		Secure: opts.UseSSL,
+		Region: opts.Region,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("storage: create client: %w", err)
 	}
-	return &StorageService{client: client, bucket: bucket, publicURL: publicURL}, nil
+	return &StorageService{client: client, bucket: opts.Bucket, publicURL: opts.PublicURL}, nil
 }
 
 func (s *StorageService) EnsureBucket(ctx context.Context) error {
