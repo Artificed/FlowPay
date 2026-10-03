@@ -30,12 +30,16 @@ resource "aws_db_instance" "main" {
 
   backup_retention_period   = 1
   skip_final_snapshot       = false
-  final_snapshot_identifier = "${var.project}-final"
+  final_snapshot_identifier = "${var.project}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
 
   auto_minor_version_upgrade = true
   deletion_protection        = false
 
   tags = {
     Name = var.project
+  }
+
+  lifecycle {
+    ignore_changes = [final_snapshot_identifier]
   }
 }
