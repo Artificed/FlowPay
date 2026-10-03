@@ -9,17 +9,17 @@ import (
 )
 
 type Config struct {
-	DatabaseURL     string
-	Port            string
-	JWTSecret       string
-	JWTExpiryHours  int
-	TemporalAddress string
-	CORSOrigins     []string
-	MinioEndpoint   string
-	MinioPublicURL  string
-	MinioAccessKey  string
-	MinioSecretKey  string
-	MinioBucket     string
+	DatabaseURL      string
+	Port             string
+	JWTSecret        string
+	JWTExpiryHours   int
+	TemporalAddress  string
+	CORSOrigins      []string
+	StorageEndpoint  string
+	StoragePublicURL string
+	StorageAccessKey string
+	StorageSecretKey string
+	StorageBucket    string
 }
 
 func Load() *Config {
@@ -51,17 +51,17 @@ func Load() *Config {
 	corsOrigins := strings.Split(getEnv("CORS_ORIGINS", "http://localhost:5173,http://localhost"), ",")
 
 	return &Config{
-		DatabaseURL:     databaseURL.String(),
-		Port:            getEnv("PORT", "8080"),
-		JWTSecret:       getEnv("JWT_SECRET", ""),
-		JWTExpiryHours:  jwtExpiry,
-		TemporalAddress: getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
-		CORSOrigins:     corsOrigins,
-		MinioEndpoint:   getEnv("MINIO_ENDPOINT", "minio:9000"),
-		MinioPublicURL:  getEnv("MINIO_PUBLIC_URL", "http://localhost:9000"),
-		MinioAccessKey:  getEnv("MINIO_ACCESS_KEY", ""),
-		MinioSecretKey:  getEnv("MINIO_SECRET_KEY", ""),
-		MinioBucket:     getEnv("MINIO_BUCKET", "flowpay"),
+		DatabaseURL:      databaseURL.String(),
+		Port:             getEnv("PORT", "8080"),
+		JWTSecret:        getEnv("JWT_SECRET", ""),
+		JWTExpiryHours:   jwtExpiry,
+		TemporalAddress:  getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
+		CORSOrigins:      corsOrigins,
+		StorageEndpoint:  getEnv("STORAGE_ENDPOINT", "minio:9000"),
+		StoragePublicURL: getEnv("STORAGE_PUBLIC_URL", "http://localhost:9000"),
+		StorageAccessKey: getEnv("STORAGE_ACCESS_KEY", ""),
+		StorageSecretKey: getEnv("STORAGE_SECRET_KEY", ""),
+		StorageBucket:    getEnv("STORAGE_BUCKET", "flowpay"),
 	}
 }
 

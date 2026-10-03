@@ -23,7 +23,7 @@ func NewStorageService(endpoint, accessKey, secretKey, bucket, publicURL string,
 		Secure: useSSL,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("minio: create client: %w", err)
+		return nil, fmt.Errorf("storage: create client: %w", err)
 	}
 	return &StorageService{client: client, bucket: bucket, publicURL: publicURL}, nil
 }
@@ -31,11 +31,11 @@ func NewStorageService(endpoint, accessKey, secretKey, bucket, publicURL string,
 func (s *StorageService) EnsureBucket(ctx context.Context) error {
 	exists, err := s.client.BucketExists(ctx, s.bucket)
 	if err != nil {
-		return fmt.Errorf("minio: check bucket: %w", err)
+		return fmt.Errorf("storage: check bucket: %w", err)
 	}
 	if !exists {
 		if err := s.client.MakeBucket(ctx, s.bucket, minio.MakeBucketOptions{}); err != nil {
-			return fmt.Errorf("minio: create bucket: %w", err)
+			return fmt.Errorf("storage: create bucket: %w", err)
 		}
 	}
 
@@ -52,10 +52,10 @@ func (s *StorageService) EnsureBucket(ctx context.Context) error {
 	}
 	policyJSON, err := json.Marshal(policy)
 	if err != nil {
-		return fmt.Errorf("minio: marshal policy: %w", err)
+		return fmt.Errorf("storage: marshal policy: %w", err)
 	}
 	if err := s.client.SetBucketPolicy(ctx, s.bucket, string(policyJSON)); err != nil {
-		return fmt.Errorf("minio: set bucket policy: %w", err)
+		return fmt.Errorf("storage: set bucket policy: %w", err)
 	}
 	return nil
 }
@@ -66,14 +66,14 @@ func (s *StorageService) UploadAvatar(ctx context.Context, userID uuid.UUID, con
 		ContentType: contentType,
 	})
 	if err != nil {
-		return "", fmt.Errorf("minio: upload avatar: %w", err)
+		return "", fmt.Errorf("storage: upload avatar: %w", err)
 	}
 	return key, nil
 }
 
 func (s *StorageService) DeleteObject(ctx context.Context, key string) error {
 	if err := s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{}); err != nil {
-		return fmt.Errorf("minio: delete object: %w", err)
+		return fmt.Errorf("storage: delete object: %w", err)
 	}
 	return nil
 }
