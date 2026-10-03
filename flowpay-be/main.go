@@ -71,9 +71,11 @@ func main() {
 		slog.Error("storage: create client failed", "error", err)
 		os.Exit(1)
 	}
-	if err := storageSvc.EnsureBucket(context.Background()); err != nil {
-		slog.Error("storage: ensure bucket failed", "error", err)
-		os.Exit(1)
+	if cfg.StorageEnsureBucket {
+		if err := storageSvc.EnsureBucket(context.Background()); err != nil {
+			slog.Error("storage: ensure bucket failed", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)
