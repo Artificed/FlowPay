@@ -114,11 +114,11 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       TEMPORAL_ADDRESS: temporal:7233
-      MINIO_ENDPOINT: minio:9000
-      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_BUCKET: flowpay
+      STORAGE_ENDPOINT: minio:9000
+      STORAGE_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}/flowpay
+      STORAGE_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${MINIO_SECRET_KEY}
+      STORAGE_BUCKET: flowpay
     depends_on:
       postgres:
         condition: service_healthy

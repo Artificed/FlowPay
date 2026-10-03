@@ -58,14 +58,24 @@ func main() {
 	txRepo := repository.NewTransactionRepository(db)
 	spRepo := repository.NewScheduledPaymentRepository(db)
 
-	storageSvc, err := storage.NewStorageService(cfg.MinioEndpoint, cfg.MinioAccessKey, cfg.MinioSecretKey, cfg.MinioBucket, cfg.MinioPublicURL, false)
+	storageSvc, err := storage.NewStorageService(storage.Options{
+		Endpoint:  cfg.StorageEndpoint,
+		Region:    cfg.StorageRegion,
+		UseSSL:    cfg.StorageUseSSL,
+		Bucket:    cfg.StorageBucket,
+		PublicURL: cfg.StoragePublicURL,
+		AccessKey: cfg.StorageAccessKey,
+		SecretKey: cfg.StorageSecretKey,
+	})
 	if err != nil {
-		slog.Error("minio: create client failed", "error", err)
+		slog.Error("storage: create client failed", "error", err)
 		os.Exit(1)
 	}
-	if err := storageSvc.EnsureBucket(context.Background()); err != nil {
-		slog.Error("minio: ensure bucket failed", "error", err)
-		os.Exit(1)
+	if cfg.StorageEnsureBucket {
+		if err := storageSvc.EnsureBucket(context.Background()); err != nil {
+			slog.Error("storage: ensure bucket failed", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	authSvc := service.NewAuthService(db, userRepo, cfg.JWTSecret, cfg.JWTExpiryHours)

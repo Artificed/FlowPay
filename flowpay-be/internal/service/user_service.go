@@ -54,6 +54,11 @@ func (s *userService) UpdateAvatar(ctx context.Context, userID uuid.UUID, conten
 		return nil, ErrImageTooLarge
 	}
 
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	key, err := s.storageSvc.UploadAvatar(ctx, userID, contentType, &buf, n)
 	if err != nil {
 		return nil, err
@@ -65,6 +70,10 @@ func (s *userService) UpdateAvatar(ctx context.Context, userID uuid.UUID, conten
 		return nil, err
 	}
 
+	if user.AvatarURL != nil {
+		s.deleteAvatar(ctx, *user.AvatarURL)
+	}
+
 	return s.userRepo.FindByID(ctx, userID)
 }
 
@@ -74,12 +83,20 @@ func (s *userService) RemoveAvatar(ctx context.Context, userID uuid.UUID) error 
 		return err
 	}
 
-	if user.AvatarURL != nil {
-		key := fmt.Sprintf("avatars/%s", userID.String())
-		_ = s.storageSvc.DeleteObject(ctx, key)
+	if err := s.userRepo.UpdateAvatarURL(ctx, userID, nil); err != nil {
+		return err
 	}
 
-	return s.userRepo.UpdateAvatarURL(ctx, userID, nil)
+	if user.AvatarURL != nil {
+		s.deleteAvatar(ctx, *user.AvatarURL)
+	}
+	return nil
+}
+
+func (s *userService) deleteAvatar(ctx context.Context, avatarURL string) {
+	if key, ok := s.storageSvc.KeyFromURL(avatarURL); ok {
+		_ = s.storageSvc.DeleteObject(ctx, key)
+	}
 }
 
 func (s *userService) UpdateDisplayName(ctx context.Context, userID uuid.UUID, name string) (*models.User, error) {

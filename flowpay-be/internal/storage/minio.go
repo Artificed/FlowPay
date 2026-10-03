@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -17,25 +18,41 @@ type StorageService struct {
 	publicURL string
 }
 
-func NewStorageService(endpoint, accessKey, secretKey, bucket, publicURL string, useSSL bool) (*StorageService, error) {
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: useSSL,
+type Options struct {
+	Endpoint  string
+	Region    string
+	UseSSL    bool
+	Bucket    string
+	PublicURL string
+	AccessKey string
+	SecretKey string
+}
+
+func NewStorageService(opts Options) (*StorageService, error) {
+	creds := credentials.NewChainCredentials([]credentials.Provider{&credentials.EnvAWS{}, &credentials.IAM{}})
+	if opts.AccessKey != "" {
+		creds = credentials.NewStaticV4(opts.AccessKey, opts.SecretKey, "")
+	}
+
+	client, err := minio.New(opts.Endpoint, &minio.Options{
+		Creds:  creds,
+		Secure: opts.UseSSL,
+		Region: opts.Region,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("minio: create client: %w", err)
+		return nil, fmt.Errorf("storage: create client: %w", err)
 	}
-	return &StorageService{client: client, bucket: bucket, publicURL: publicURL}, nil
+	return &StorageService{client: client, bucket: opts.Bucket, publicURL: strings.TrimSuffix(opts.PublicURL, "/")}, nil
 }
 
 func (s *StorageService) EnsureBucket(ctx context.Context) error {
 	exists, err := s.client.BucketExists(ctx, s.bucket)
 	if err != nil {
-		return fmt.Errorf("minio: check bucket: %w", err)
+		return fmt.Errorf("storage: check bucket: %w", err)
 	}
 	if !exists {
 		if err := s.client.MakeBucket(ctx, s.bucket, minio.MakeBucketOptions{}); err != nil {
-			return fmt.Errorf("minio: create bucket: %w", err)
+			return fmt.Errorf("storage: create bucket: %w", err)
 		}
 	}
 
@@ -52,32 +69,36 @@ func (s *StorageService) EnsureBucket(ctx context.Context) error {
 	}
 	policyJSON, err := json.Marshal(policy)
 	if err != nil {
-		return fmt.Errorf("minio: marshal policy: %w", err)
+		return fmt.Errorf("storage: marshal policy: %w", err)
 	}
 	if err := s.client.SetBucketPolicy(ctx, s.bucket, string(policyJSON)); err != nil {
-		return fmt.Errorf("minio: set bucket policy: %w", err)
+		return fmt.Errorf("storage: set bucket policy: %w", err)
 	}
 	return nil
 }
 
 func (s *StorageService) UploadAvatar(ctx context.Context, userID uuid.UUID, contentType string, r io.Reader, size int64) (string, error) {
-	key := fmt.Sprintf("avatars/%s", userID.String())
+	key := fmt.Sprintf("avatars/%s/%s", userID, uuid.NewString())
 	_, err := s.client.PutObject(ctx, s.bucket, key, r, size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {
-		return "", fmt.Errorf("minio: upload avatar: %w", err)
+		return "", fmt.Errorf("storage: upload avatar: %w", err)
 	}
 	return key, nil
 }
 
 func (s *StorageService) DeleteObject(ctx context.Context, key string) error {
 	if err := s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{}); err != nil {
-		return fmt.Errorf("minio: delete object: %w", err)
+		return fmt.Errorf("storage: delete object: %w", err)
 	}
 	return nil
 }
 
 func (s *StorageService) PublicURL(key string) string {
-	return fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucket, key)
+	return s.publicURL + "/" + key
+}
+
+func (s *StorageService) KeyFromURL(url string) (string, bool) {
+	return strings.CutPrefix(url, s.publicURL+"/")
 }
