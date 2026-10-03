@@ -40,6 +40,12 @@ variable "db_multi_az" {
   default     = false
 }
 
+variable "restore_from_snapshot" {
+  description = "Build the database from its newest manual snapshot. Set to false for the first apply in an account with no snapshot yet."
+  type        = bool
+  default     = true
+}
+
 variable "alb_idle_timeout" {
   description = "Seconds an idle connection is held open. High for the SSE stream endpoint."
   type        = number

@@ -7,6 +7,14 @@ resource "aws_db_subnet_group" "main" {
   }
 }
 
+data "aws_db_snapshot" "latest" {
+  count = var.restore_from_snapshot ? 1 : 0
+
+  db_instance_identifier = var.project
+  snapshot_type          = "manual"
+  most_recent            = true
+}
+
 resource "aws_db_instance" "main" {
   identifier     = var.project
   engine         = "postgres"
@@ -31,6 +39,7 @@ resource "aws_db_instance" "main" {
   backup_retention_period   = 1
   skip_final_snapshot       = false
   final_snapshot_identifier = "${var.project}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  snapshot_identifier       = var.restore_from_snapshot ? data.aws_db_snapshot.latest[0].id : null
 
   auto_minor_version_upgrade = true
   deletion_protection        = false
@@ -40,6 +49,6 @@ resource "aws_db_instance" "main" {
   }
 
   lifecycle {
-    ignore_changes = [final_snapshot_identifier]
+    ignore_changes = [final_snapshot_identifier, snapshot_identifier]
   }
 }
