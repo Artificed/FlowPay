@@ -78,7 +78,7 @@ func (s *StorageService) EnsureBucket(ctx context.Context) error {
 }
 
 func (s *StorageService) UploadAvatar(ctx context.Context, userID uuid.UUID, contentType string, r io.Reader, size int64) (string, error) {
-	key := fmt.Sprintf("avatars/%s", userID.String())
+	key := fmt.Sprintf("avatars/%s/%s", userID, uuid.NewString())
 	_, err := s.client.PutObject(ctx, s.bucket, key, r, size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})
@@ -97,4 +97,8 @@ func (s *StorageService) DeleteObject(ctx context.Context, key string) error {
 
 func (s *StorageService) PublicURL(key string) string {
 	return s.publicURL + "/" + key
+}
+
+func (s *StorageService) KeyFromURL(url string) (string, bool) {
+	return strings.CutPrefix(url, s.publicURL+"/")
 }
