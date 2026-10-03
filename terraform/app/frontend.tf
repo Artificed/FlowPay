@@ -46,12 +46,27 @@ resource "aws_cloudfront_distribution" "frontend" {
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
+  origin {
+    domain_name              = local.avatars_bucket_regional_domain_name
+    origin_id                = "avatars"
+    origin_access_control_id = aws_cloudfront_origin_access_control.avatars.id
+  }
+
   default_cache_behavior {
     target_origin_id       = "frontend"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
+    cache_policy_id        = data.aws_cloudfront_cache_policy.optimized.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/avatars/*"
+    target_origin_id       = "avatars"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
     cache_policy_id        = data.aws_cloudfront_cache_policy.optimized.id
   }
 
