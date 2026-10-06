@@ -1,3 +1,22 @@
+ephemeral "random_password" "jwt_secret" {
+  length = 64
+}
+
+resource "aws_secretsmanager_secret" "jwt" {
+  name                    = "${var.project}-jwt-secret"
+  recovery_window_in_days = 0
+
+  tags = {
+    Name = "${var.project}-jwt-secret"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "jwt" {
+  secret_id                = aws_secretsmanager_secret.jwt.id
+  secret_string_wo         = ephemeral.random_password.jwt_secret.result
+  secret_string_wo_version = 1
+}
+
 resource "aws_cloudwatch_log_group" "backend" {
   name              = "/ecs/${var.project}-backend"
   retention_in_days = 14
