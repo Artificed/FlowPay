@@ -28,7 +28,7 @@ FlowPay is a comprehensive digital wallet and payment processing system engineer
 - **Interactive Interface** - Built with React 19, Tailwind CSS 4, and `shadcn/ui` for a responsive, modern aesthetic.
 - **Live Transaction Monitoring** - Real-time displays for transaction histories, pending transfers, and live balance updates.
 - **Dynamic Modals** - Intuitive popups for sending money and depositing funds.
-- **Profile Management** - Avatar upload/delete (MinIO-backed), display name, email, and password editing with a glassmorphism profile card.
+- **Profile Management** - Avatar upload/delete (S3-backed, MinIO locally), display name, email, and password editing with a glassmorphism profile card.
 - **Full Page Suite** — Home (balance overview, activity chart, recent transactions), Transactions (date-grouped history, full-text search, detail modal), Scheduled Payments (status filters, stats cards, lifecycle controls), and Profile pages.
 
 ---
@@ -59,7 +59,7 @@ A scalable Go server utilizing the Gin framework and GORM:
 | `repository/` | PostgreSQL database interactions via GORM. |
 | `config/` | Application configuration management. |
 | `models/` | Core domain entities. |
-| `storage/` | MinIO S3-compatible object storage client for user avatars. |
+| `storage/` | S3 object storage client for user avatars. |
 
 #### Frontend Module (`flowpay-fe/`)
 A fast, modern React SPA leveraging Vite:
@@ -82,7 +82,7 @@ A fast, modern React SPA leveraging Vite:
 | **Database** | PostgreSQL 17 |
 | **Orchestration**| Temporal Server v1.30.1 |
 | **Infrastructure**| Docker, Docker Compose, Nginx |
-| **Storage** | MinIO (S3-compatible object storage for user avatars) |
+| **Storage** | Amazon S3 for user avatars, MinIO locally |
 | **Security** | JWT, bcrypt |
 
 ---
