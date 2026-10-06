@@ -19,6 +19,7 @@ locals {
   private_route_table_id = local.foundation.private_route_table_id
   rds_security_group_id  = local.foundation.rds_security_group_id
   alb_security_group_id  = local.foundation.alb_security_group_id
+  app_security_group_id  = local.foundation.app_security_group_id
   api_certificate_arn    = local.foundation.api_certificate_arn
   zone_id                = local.foundation.zone_id
   site_certificate_arn   = local.foundation.site_certificate_arn

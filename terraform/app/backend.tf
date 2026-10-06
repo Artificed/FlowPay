@@ -151,3 +151,36 @@ resource "aws_ecs_task_definition" "backend" {
     Name = "${var.project}-backend"
   }
 }
+
+resource "aws_ecs_service" "backend" {
+  name            = "${var.project}-backend"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.backend.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = local.private_subnet_ids
+    security_groups  = [local.app_security_group_id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.backend.arn
+    container_name   = "backend"
+    container_port   = var.backend_port
+  }
+
+  health_check_grace_period_seconds = 360
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  tags = {
+    Name = "${var.project}-backend"
+  }
+
+  depends_on = [aws_lb_listener.https, aws_vpc_endpoint.interface]
+}
