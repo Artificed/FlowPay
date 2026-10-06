@@ -58,6 +58,11 @@ variable "backend_port" {
   default     = 8080
 }
 
+variable "backend_image_tag" {
+  description = "Tag of the flowpay-backend image to run, named after the git commit it was built from."
+  type        = string
+}
+
 variable "cloudfront_price_class" {
   description = "Which edge locations to use. All is the full network."
   type        = string

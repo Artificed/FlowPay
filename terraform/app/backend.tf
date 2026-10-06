@@ -1,3 +1,7 @@
+locals {
+  site_url = "https://${data.aws_route53_zone.main.name}"
+}
+
 data "aws_ecr_repository" "backend" {
   name = "${var.project}-backend"
 }
@@ -90,4 +94,60 @@ resource "aws_iam_role_policy" "backend_task" {
   name   = "avatars"
   role   = aws_iam_role.backend_task.id
   policy = data.aws_iam_policy_document.backend_task.json
+}
+
+resource "aws_ecs_task_definition" "backend" {
+  family                   = "${var.project}-backend"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.backend_execution.arn
+  task_role_arn            = aws_iam_role.backend_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "backend"
+    image     = "${data.aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
+    essential = true
+
+    portMappings = [{
+      containerPort = var.backend_port
+    }]
+
+    environment = [
+      { name = "GIN_MODE", value = "release" },
+      { name = "PORT", value = tostring(var.backend_port) },
+      { name = "DB_HOST", value = aws_db_instance.main.address },
+      { name = "DB_PORT", value = tostring(aws_db_instance.main.port) },
+      { name = "DB_NAME", value = aws_db_instance.main.db_name },
+      { name = "DB_USER", value = aws_db_instance.main.username },
+      { name = "DB_SSLMODE", value = "verify-full" },
+      { name = "DB_SSLROOTCERT", value = "/app/certs/rds-ap-southeast-3-bundle.pem" },
+      { name = "CORS_ORIGINS", value = local.site_url },
+      { name = "STORAGE_ENDPOINT", value = "s3.${local.region}.amazonaws.com" },
+      { name = "STORAGE_REGION", value = local.region },
+      { name = "STORAGE_USE_SSL", value = "true" },
+      { name = "STORAGE_BUCKET", value = local.avatars_bucket_name },
+      { name = "STORAGE_PUBLIC_URL", value = local.site_url },
+      { name = "STORAGE_ENSURE_BUCKET", value = "false" },
+    ]
+
+    secrets = [
+      { name = "DB_PASSWORD", valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::" },
+      { name = "JWT_SECRET", valueFrom = aws_secretsmanager_secret.jwt.arn },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.backend.name
+        awslogs-region        = local.region
+        awslogs-stream-prefix = "ecs"
+      }
+    }
+  }])
+
+  tags = {
+    Name = "${var.project}-backend"
+  }
 }
