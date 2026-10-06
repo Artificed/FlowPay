@@ -88,8 +88,8 @@ services:
     image: minio/minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -135,9 +135,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       TEMPORAL_ADDRESS: temporal:7233
       STORAGE_ENDPOINT: minio:9000
-      STORAGE_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}/flowpay
-      STORAGE_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      STORAGE_SECRET_KEY: ${MINIO_SECRET_KEY}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/flowpay}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
       STORAGE_BUCKET: flowpay
     ports:
       - "8080:8080"
