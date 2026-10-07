@@ -192,3 +192,35 @@ resource "aws_ecs_task_definition" "temporal" {
     Name = "${var.project}-temporal"
   }
 }
+
+resource "aws_ecs_service" "temporal" {
+  name            = "${var.project}-temporal"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.temporal.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 100
+
+  network_configuration {
+    subnets          = local.private_subnet_ids
+    security_groups  = [local.temporal_security_group_id]
+    assign_public_ip = false
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.temporal.arn
+  }
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  tags = {
+    Name = "${var.project}-temporal"
+  }
+
+  depends_on = [aws_vpc_endpoint.interface]
+}
