@@ -48,3 +48,30 @@ resource "aws_iam_role_policy" "temporal_execution" {
   role   = aws_iam_role.temporal_execution.id
   policy = data.aws_iam_policy_document.temporal_execution.json
 }
+
+resource "aws_service_discovery_private_dns_namespace" "main" {
+  name = "${var.project}.local"
+  vpc  = local.vpc_id
+
+  tags = {
+    Name = "${var.project}.local"
+  }
+}
+
+resource "aws_service_discovery_service" "temporal" {
+  name          = "temporal"
+  force_destroy = true
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      type = "A"
+      ttl  = 10
+    }
+  }
+
+  tags = {
+    Name = "${var.project}-temporal"
+  }
+}
