@@ -128,6 +128,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "DB_USER", value = aws_db_instance.main.username },
       { name = "DB_SSLMODE", value = "verify-full" },
       { name = "DB_SSLROOTCERT", value = "/app/certs/rds-ap-southeast-3-bundle.pem" },
+      { name = "TEMPORAL_ADDRESS", value = "${aws_service_discovery_service.temporal.name}.${aws_service_discovery_private_dns_namespace.main.name}:${local.temporal_port}" },
       { name = "CORS_ORIGINS", value = local.site_url },
       { name = "STORAGE_ENDPOINT", value = "s3.${local.region}.amazonaws.com" },
       { name = "STORAGE_REGION", value = local.region },
