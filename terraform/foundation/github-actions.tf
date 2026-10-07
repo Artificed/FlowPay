@@ -64,3 +64,34 @@ resource "aws_iam_role_policy" "github_ecr_push" {
   role   = aws_iam_role.github_ecr_push.id
   policy = data.aws_iam_policy_document.github_ecr_push.json
 }
+
+resource "aws_iam_role" "github_frontend_upload" {
+  name               = "${var.project}-github-frontend-upload"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume.json
+
+  tags = {
+    Name = "${var.project}-github-frontend-upload"
+  }
+}
+
+locals {
+  frontend_bucket_arn = "arn:aws:s3:::${var.project}-frontend-${data.aws_caller_identity.current.account_id}"
+}
+
+data "aws_iam_policy_document" "github_frontend_upload" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [local.frontend_bucket_arn]
+  }
+
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["${local.frontend_bucket_arn}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "github_frontend_upload" {
+  name   = "frontend-upload"
+  role   = aws_iam_role.github_frontend_upload.id
+  policy = data.aws_iam_policy_document.github_frontend_upload.json
+}
