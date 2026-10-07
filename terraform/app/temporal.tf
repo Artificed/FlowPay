@@ -111,14 +111,27 @@ resource "aws_ecs_task_definition" "temporal" {
 
   container_definitions = jsonencode([
     {
+      name       = "write-rds-ca"
+      image      = "${local.dockerhub_mirror}/temporalio/admin-tools:${local.temporal_version}"
+      essential  = false
+      user       = "root"
+      entryPoint = ["/bin/sh", "-c"]
+      command    = ["printf '%s' \"$RDS_CA\" > ${local.rds_ca_path}"]
+
+      environment = [
+        { name = "RDS_CA", value = file("${path.module}/../../flowpay-be/certs/rds-ap-southeast-3-bundle.pem") },
+      ]
+
+      mountPoints      = [{ sourceVolume = "certs", containerPath = "/certs" }]
+      logConfiguration = local.temporal_log_configuration
+    },
+    {
       name       = "schema-setup"
       image      = "${local.dockerhub_mirror}/temporalio/admin-tools:${local.temporal_version}"
       essential  = false
+      dependsOn  = [{ containerName = "write-rds-ca", condition = "SUCCESS" }]
       entryPoint = ["/bin/sh", "-c"]
-      command = [join("\n", [
-        "printf '%s' \"$RDS_CA\" > ${local.rds_ca_path}",
-        file("${path.module}/../../temporal/scripts/setup-postgres.sh"),
-      ])]
+      command    = [file("${path.module}/../../temporal/scripts/setup-postgres.sh")]
 
       environment = [
         { name = "POSTGRES_SEEDS", value = aws_db_instance.main.address },
@@ -126,14 +139,13 @@ resource "aws_ecs_task_definition" "temporal" {
         { name = "DB_PORT", value = tostring(aws_db_instance.main.port) },
         { name = "SQL_TLS", value = "true" },
         { name = "SQL_TLS_CA_FILE", value = local.rds_ca_path },
-        { name = "RDS_CA", value = file("${path.module}/../../flowpay-be/certs/rds-ap-southeast-3-bundle.pem") },
       ]
 
       secrets = [
         { name = "SQL_PASSWORD", valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::" },
       ]
 
-      mountPoints      = [{ sourceVolume = "certs", containerPath = "/certs" }]
+      mountPoints      = [{ sourceVolume = "certs", containerPath = "/certs", readOnly = true }]
       logConfiguration = local.temporal_log_configuration
     },
     {
