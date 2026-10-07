@@ -52,6 +52,7 @@ data "aws_iam_policy_document" "github_ecr_push" {
       "ecr:UploadLayerPart",
       "ecr:CompleteLayerUpload",
       "ecr:PutImage",
+      "ecr:BatchGetImage",
       "ecr:DescribeImages",
     ]
     resources = [aws_ecr_repository.this["backend"].arn]
