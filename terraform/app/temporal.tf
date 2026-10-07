@@ -77,10 +77,11 @@ resource "aws_service_discovery_service" "temporal" {
 }
 
 locals {
-  dockerhub_mirror = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/dockerhub"
-  temporal_version = "1.30.1"
-  temporal_port    = 7233
-  rds_ca_path      = "/config/rds-ca.pem"
+  dockerhub_mirror    = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/dockerhub"
+  temporal_version    = "1.30.1"
+  temporal_port       = 7233
+  rds_ca_path         = "/config/rds-ca.pem"
+  dynamic_config_path = "/config/dynamicconfig.yaml"
 
   temporal_log_configuration = {
     logDriver = "awslogs"
@@ -116,10 +117,14 @@ resource "aws_ecs_task_definition" "temporal" {
       essential  = false
       user       = "root"
       entryPoint = ["/bin/sh", "-c"]
-      command    = ["printf '%s' \"$RDS_CA\" > ${local.rds_ca_path}"]
+      command = [join(" && ", [
+        "printf '%s' \"$RDS_CA\" > ${local.rds_ca_path}",
+        "printf '%s' \"$DYNAMIC_CONFIG\" > ${local.dynamic_config_path}",
+      ])]
 
       environment = [
         { name = "RDS_CA", value = file("${path.module}/../../flowpay-be/certs/rds-ap-southeast-3-bundle.pem") },
+        { name = "DYNAMIC_CONFIG", value = file("${path.module}/../../temporal/dynamicconfig/production-sql.yaml") },
       ]
 
       mountPoints      = [{ sourceVolume = "config", containerPath = "/config" }]
@@ -165,6 +170,7 @@ resource "aws_ecs_task_definition" "temporal" {
         { name = "SQL_TLS_ENABLED", value = "true" },
         { name = "SQL_CA", value = local.rds_ca_path },
         { name = "SQL_HOST_VERIFICATION", value = "true" },
+        { name = "DYNAMIC_CONFIG_FILE_PATH", value = local.dynamic_config_path },
       ]
 
       secrets = [
