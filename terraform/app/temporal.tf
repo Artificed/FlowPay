@@ -80,7 +80,7 @@ locals {
   dockerhub_mirror = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/dockerhub"
   temporal_version = "1.30.1"
   temporal_port    = 7233
-  rds_ca_path      = "/certs/rds-ca.pem"
+  rds_ca_path      = "/config/rds-ca.pem"
 
   temporal_log_configuration = {
     logDriver = "awslogs"
@@ -106,12 +106,12 @@ resource "aws_ecs_task_definition" "temporal" {
   }
 
   volume {
-    name = "certs"
+    name = "config"
   }
 
   container_definitions = jsonencode([
     {
-      name       = "write-rds-ca"
+      name       = "write-config"
       image      = "${local.dockerhub_mirror}/temporalio/admin-tools:${local.temporal_version}"
       essential  = false
       user       = "root"
@@ -122,14 +122,14 @@ resource "aws_ecs_task_definition" "temporal" {
         { name = "RDS_CA", value = file("${path.module}/../../flowpay-be/certs/rds-ap-southeast-3-bundle.pem") },
       ]
 
-      mountPoints      = [{ sourceVolume = "certs", containerPath = "/certs" }]
+      mountPoints      = [{ sourceVolume = "config", containerPath = "/config" }]
       logConfiguration = local.temporal_log_configuration
     },
     {
       name       = "schema-setup"
       image      = "${local.dockerhub_mirror}/temporalio/admin-tools:${local.temporal_version}"
       essential  = false
-      dependsOn  = [{ containerName = "write-rds-ca", condition = "SUCCESS" }]
+      dependsOn  = [{ containerName = "write-config", condition = "SUCCESS" }]
       entryPoint = ["/bin/sh", "-c"]
       command    = [file("${path.module}/../../temporal/scripts/setup-postgres.sh")]
 
@@ -145,7 +145,7 @@ resource "aws_ecs_task_definition" "temporal" {
         { name = "SQL_PASSWORD", valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::" },
       ]
 
-      mountPoints      = [{ sourceVolume = "certs", containerPath = "/certs", readOnly = true }]
+      mountPoints      = [{ sourceVolume = "config", containerPath = "/config", readOnly = true }]
       logConfiguration = local.temporal_log_configuration
     },
     {
@@ -171,7 +171,7 @@ resource "aws_ecs_task_definition" "temporal" {
         { name = "POSTGRES_PWD", valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::" },
       ]
 
-      mountPoints = [{ sourceVolume = "certs", containerPath = "/certs", readOnly = true }]
+      mountPoints = [{ sourceVolume = "config", containerPath = "/config", readOnly = true }]
 
       healthCheck = {
         command     = ["CMD-SHELL", "nc -z localhost ${local.temporal_port} || exit 1"]
