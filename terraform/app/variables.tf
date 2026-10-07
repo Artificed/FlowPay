@@ -10,12 +10,6 @@ variable "state_bucket" {
   default     = "flowpay-tfstate-422661068405"
 }
 
-variable "use_nat_gateway" {
-  description = "Route private subnet egress through a NAT gateway instead of relying on VPC endpoints."
-  type        = bool
-  default     = false
-}
-
 variable "db_instance_class" {
   description = "RDS instance class."
   type        = string
