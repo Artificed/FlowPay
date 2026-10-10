@@ -172,6 +172,10 @@ resource "aws_ecs_task_definition" "temporal" {
         { name = "SQL_CA", value = local.rds_ca_path },
         { name = "SQL_HOST_VERIFICATION", value = "true" },
         { name = "DYNAMIC_CONFIG_FILE_PATH", value = local.dynamic_config_path },
+        { name = "SQL_MAX_CONNS", value = "8" },
+        { name = "SQL_MAX_IDLE_CONNS", value = "2" },
+        { name = "SQL_VIS_MAX_CONNS", value = "2" },
+        { name = "SQL_VIS_MAX_IDLE_CONNS", value = "1" },
       ]
 
       secrets = [
