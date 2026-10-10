@@ -8,8 +8,9 @@ resource "aws_cloudwatch_log_group" "temporal" {
 }
 
 resource "aws_iam_role" "temporal_execution" {
-  name               = "${var.project}-temporal-execution"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  name                 = "${var.project}-temporal-execution"
+  permissions_boundary = local.app_role_boundary_arn
+  assume_role_policy   = data.aws_iam_policy_document.ecs_tasks_assume.json
 
   tags = {
     Name = "${var.project}-temporal-execution"

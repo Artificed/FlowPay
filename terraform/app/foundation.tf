@@ -24,6 +24,7 @@ locals {
   api_certificate_arn        = local.foundation.api_certificate_arn
   zone_id                    = local.foundation.zone_id
   site_certificate_arn       = local.foundation.site_certificate_arn
+  app_role_boundary_arn      = local.foundation.app_role_boundary_arn
 
   avatars_bucket_name                 = local.foundation.avatars_bucket_name
   avatars_bucket_arn                  = local.foundation.avatars_bucket_arn

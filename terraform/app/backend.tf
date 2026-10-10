@@ -35,8 +35,9 @@ resource "aws_cloudwatch_log_group" "backend" {
 }
 
 resource "aws_iam_role" "backend_execution" {
-  name               = "${var.project}-backend-execution"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  name                 = "${var.project}-backend-execution"
+  permissions_boundary = local.app_role_boundary_arn
+  assume_role_policy   = data.aws_iam_policy_document.ecs_tasks_assume.json
 
   tags = {
     Name = "${var.project}-backend-execution"
@@ -75,8 +76,9 @@ resource "aws_iam_role_policy" "backend_execution" {
 }
 
 resource "aws_iam_role" "backend_task" {
-  name               = "${var.project}-backend-task"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  name                 = "${var.project}-backend-task"
+  permissions_boundary = local.app_role_boundary_arn
+  assume_role_policy   = data.aws_iam_policy_document.ecs_tasks_assume.json
 
   tags = {
     Name = "${var.project}-backend-task"
