@@ -68,6 +68,9 @@ export default function HomePage() {
   }
 
   useSSETransactions({
+    onReconnect() {
+      fetchData()
+    },
     onTransactionUpdate(updated) {
       setTransactions((prev) => {
         const exists = prev.some((t) => t.id === updated.id)

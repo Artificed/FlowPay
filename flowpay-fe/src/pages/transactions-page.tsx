@@ -62,14 +62,14 @@ export default function TransactionsPage() {
   const pageRef = useRef(page)
   pageRef.current = page
 
-  const fetchPage = useCallback(async (p: number) => {
-    setTxLoading(true)
+  const fetchPage = useCallback(async (p: number, showLoading = true) => {
+    if (showLoading) setTxLoading(true)
     try {
       const result = await transferService.listTransfers({ limit: PAGE_SIZE, offset: p * PAGE_SIZE })
       setTransactions(result.data)
       setTotal(result.total)
     } finally {
-      setTxLoading(false)
+      if (showLoading) setTxLoading(false)
     }
   }, [])
 
@@ -84,6 +84,10 @@ export default function TransactionsPage() {
   }, [fetchPage])
 
   useSSETransactions({
+    onReconnect() {
+      fetchPage(pageRef.current, false)
+      walletService.getWallet().then(setWallet).catch(() => {})
+    },
     onTransactionUpdate(updated) {
       setTransactions((prev) => {
         const exists = prev.some((t) => t.id === updated.id)

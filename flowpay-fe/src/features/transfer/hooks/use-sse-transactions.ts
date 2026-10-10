@@ -5,6 +5,7 @@ import type { Wallet } from "@/features/wallet/types"
 
 type Handlers = {
   onSnapshot?: (txns: Transaction[]) => void
+  onReconnect?: () => void
   onTransactionUpdate: (updated: Transaction) => void
   onWalletUpdate: (wallet: Wallet) => void
   onError?: (err: unknown) => void
@@ -16,9 +17,12 @@ export function useSSETransactions(handlers: Handlers): void {
 
   useEffect(() => {
     const ctrl = new AbortController()
+    let connected = false
     streamTransactions({
       signal: ctrl.signal,
       onSnapshot(txns) {
+        if (connected) handlersRef.current.onReconnect?.()
+        connected = true
         handlersRef.current.onSnapshot?.(txns)
       },
       onTransactionUpdate(updated) {
