@@ -92,3 +92,8 @@ output "avatars_bucket_regional_domain_name" {
   description = "Regional domain name of the avatars bucket, for the CloudFront origin."
   value       = aws_s3_bucket.avatars.bucket_regional_domain_name
 }
+
+output "app_role_boundary_arn" {
+  description = "Permissions boundary every IAM role in the app layer must carry."
+  value       = aws_iam_policy.app_role_boundary.arn
+}
