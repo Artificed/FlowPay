@@ -1,8 +1,8 @@
 # FlowPay
 
-## Overview
+FlowPay is a digital wallet with multi-currency balances, deposits, transfers and recurring payments. Every transfer runs as a Temporal workflow made of small steps, and when a step fails partway through, a compensating step undoes the ones that already ran. The backend is Go, the frontend is React, and it runs on AWS (ECS Fargate, RDS, CloudFront), built with Terraform and deployed through GitHub Actions.
 
-FlowPay is a comprehensive digital wallet and payment processing system engineered for high reliability and consistency. Developed with a Go backend and a React/TypeScript frontend, it leverages Temporal orchestration to manage multi-step financial transactions securely. FlowPay features a complete client-server architecture with stateful transaction management, ensuring that payment operations are resilient to failures, utilizing a Saga pattern for robust compensating actions and reversals.
+![FlowPay dashboard](docs/app/dashboard.png)
 
 ---
 
@@ -162,8 +162,6 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 ---
 
 ## Screenshots
-
-![FlowPay - Dashboard](docs/app/dashboard.png)
 
 ![FlowPay - Transactions](docs/app/transactions.png)
 
