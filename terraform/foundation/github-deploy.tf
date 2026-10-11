@@ -37,6 +37,7 @@ locals {
   app_role_arns = [
     "arn:aws:iam::${local.account_id}:role/${var.project}-backend-*",
     "arn:aws:iam::${local.account_id}:role/${var.project}-temporal-*",
+    "arn:aws:iam::${local.account_id}:role/${var.project}-restart-*",
   ]
 }
 
@@ -75,6 +76,16 @@ data "aws_iam_policy_document" "app_role_boundary" {
   statement {
     actions   = ["s3:PutObject", "s3:DeleteObject"]
     resources = ["${aws_s3_bucket.avatars.arn}/avatars/*"]
+  }
+
+  statement {
+    actions   = ["ecs:UpdateService"]
+    resources = ["arn:aws:ecs:${var.region}:${local.account_id}:service/${var.project}/${var.project}-*"]
+  }
+
+  statement {
+    actions   = ["states:StartExecution"]
+    resources = ["arn:aws:states:${var.region}:${local.account_id}:stateMachine:${var.project}-*"]
   }
 }
 
@@ -533,11 +544,63 @@ data "aws_iam_policy_document" "github_deploy_data" {
   }
 }
 
+data "aws_iam_policy_document" "github_deploy_restart" {
+  statement {
+    sid = "RotationRule"
+    actions = [
+      "events:DeleteRule",
+      "events:DescribeRule",
+      "events:ListTagsForResource",
+      "events:ListTargetsByRule",
+      "events:PutRule",
+      "events:PutTargets",
+      "events:RemoveTargets",
+      "events:TagResource",
+      "events:UntagResource",
+    ]
+    resources = ["arn:aws:events:${var.region}:${local.account_id}:rule/${var.project}-*"]
+  }
+
+  statement {
+    sid = "RestartStateMachine"
+    actions = [
+      "states:CreateStateMachine",
+      "states:DeleteStateMachine",
+      "states:DescribeStateMachine",
+      "states:ListStateMachineVersions",
+      "states:ListTagsForResource",
+      "states:TagResource",
+      "states:UntagResource",
+      "states:UpdateStateMachine",
+    ]
+    resources = ["arn:aws:states:${var.region}:${local.account_id}:stateMachine:${var.project}-*"]
+  }
+
+  statement {
+    sid       = "ValidateStateMachines"
+    actions   = ["states:ValidateStateMachineDefinition"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "PassRestartRoles"
+    actions   = ["iam:PassRole"]
+    resources = ["arn:aws:iam::${local.account_id}:role/${var.project}-restart-*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["states.amazonaws.com", "events.amazonaws.com"]
+    }
+  }
+}
+
 locals {
   github_deploy_policies = {
     network    = data.aws_iam_policy_document.github_deploy_network.json
     containers = data.aws_iam_policy_document.github_deploy_containers.json
     data       = data.aws_iam_policy_document.github_deploy_data.json
+    restart    = data.aws_iam_policy_document.github_deploy_restart.json
   }
 }
 
