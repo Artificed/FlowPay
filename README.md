@@ -33,43 +33,38 @@ FlowPay is a comprehensive digital wallet and payment processing system engineer
 
 ---
 
-## Architecture
-
-FlowPay is architected as an orchestrated micro-system, cleanly separating the presentation layer, the API endpoints, and the workflow state machine.
+## Code layout
 
 ```text
 FlowPay/
-├── flowpay-be/             # Go REST API & Temporal Workers
-├── flowpay-fe/             # React/Vite Frontend Web App
-├── temporal/               # Temporal Setup Scripts & Configurations
-├── docker-compose.yml      # Production infra composition
-└── docker-compose.dev.yml  # Local development infra
+├── flowpay-be/             # Go REST API and Temporal worker
+├── flowpay-fe/             # React frontend (Vite)
+├── temporal/               # Temporal setup scripts and dynamic config
+├── terraform/              # AWS infrastructure, foundation and app layers
+├── docs/                   # Screenshots
+├── .github/workflows/      # Image build, frontend upload, deploy
+├── docker-compose.yml      # Whole stack in containers, behind Nginx
+└── docker-compose.dev.yml  # Local development stack
 ```
 
-### Module Details
-
-#### Backend Module (`flowpay-be/`)
-A scalable Go server utilizing the Gin framework and GORM:
+### Backend (`flowpay-be/`)
+A Go server built on Gin and GORM:
 
 | Package | Description |
 |---------|-------------|
 | `api/handler/` | REST endpoint handlers bound to domain services. |
-| `service/` | Core business logic implementation for wallets, auth, and transfers. |
-| `temporal/` | Workflow definitions, Activity wrappers, and Worker initializations orchestrating side-effect logic outside the HTTP boundary. |
-| `repository/` | PostgreSQL database interactions via GORM. |
-| `config/` | Application configuration management. |
-| `models/` | Core domain entities. |
-| `storage/` | S3 object storage client for user avatars. |
+| `service/` | Business logic for wallets, auth and transfers. |
+| `temporal/` | Workflow definitions, activity wrappers and worker setup. |
+| `repository/` | PostgreSQL access through GORM. |
+| `config/` | Application configuration. |
+| `models/` | Domain entities. |
+| `storage/` | S3 client for user avatars. |
 
-#### Frontend Module (`flowpay-fe/`)
-A fast, modern React SPA leveraging Vite:
-- **State & Data Fetching**: Robust management using customized hooks for asynchronous behaviors.
-- **Real-Time Data**: `EventSource` connections listening to backend SSE streams.
-- **UI Components**: Formulated with `shadcn/ui`, `lucide-react`, and React Hook Form.
-
-#### Infrastructure
-- **PostgreSQL**: Primary data store for users, wallets, and transaction histories.
-- **Temporal Server**: External orchestration cluster managing the state, queues, and history of all payment workflows independently of the primary app server.
+### Frontend (`flowpay-fe/`)
+A React single-page app built with Vite:
+- **Data fetching**: an Axios client with a service module per feature.
+- **Live data**: `@microsoft/fetch-event-source` listening to the backend's SSE stream.
+- **UI components**: `shadcn/ui`, `lucide-react` and React Hook Form.
 
 ---
 
