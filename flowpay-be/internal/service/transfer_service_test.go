@@ -483,6 +483,66 @@ func TestReverseTransfer_Processing_SkipsRecipientDebit(t *testing.T) {
 	}
 }
 
+func TestReverseTransfer_Processing_RefundsOnlyWhatWasTaken(t *testing.T) {
+	cases := []struct {
+		name          string
+		holdStatus    models.HoldStatus
+		wantTotal     int64
+		wantAvailable int64
+	}{
+		{"debit failed, hold still pending", models.HoldStatusPending, 0, 500},
+		{"credit failed, hold settled", models.HoldStatusSettled, 500, 500},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			txnID := uuid.New()
+			walletID := uuid.New()
+			txn := &models.Transaction{
+				Base:              models.Base{ID: txnID},
+				SenderWalletID:    &walletID,
+				RecipientWalletID: uuid.New(),
+				Currency:          "USD",
+				Amount:            500,
+				Status:            models.TransactionStatusProcessing,
+			}
+
+			db, mock := newMockDB(t)
+			mock.ExpectBegin()
+			mock.ExpectCommit()
+
+			var gotTotal, gotAvailable int64
+			txRepo := &mockTxRepo{
+				findByIDFn:     func(_ uuid.UUID) (*models.Transaction, error) { return txn, nil },
+				updateStatusFn: func(_ uuid.UUID, _ models.TransactionStatus) error { return nil },
+			}
+			balanceRepo := &mockBalanceRepo{
+				findOrCreateFn: func(_ uuid.UUID, _ string) (*models.WalletBalance, error) {
+					return &models.WalletBalance{Base: models.Base{ID: uuid.New()}}, nil
+				},
+				updateAmountsFn: func(_ uuid.UUID, totalDelta, availableDelta int64) error {
+					gotTotal, gotAvailable = totalDelta, availableDelta
+					return nil
+				},
+			}
+			holdRepo := &mockHoldRepo{
+				findByTransactionIDFn: func(_ uuid.UUID) (*models.WalletHold, error) {
+					return &models.WalletHold{Base: models.Base{ID: uuid.New()}, Amount: 500, Status: tc.holdStatus}, nil
+				},
+				updateStatusFn: func(_ uuid.UUID, _ models.HoldStatus) error { return nil },
+			}
+
+			svc := NewTransferService(db, &mockWalletRepo{}, balanceRepo, holdRepo, txRepo)
+			if _, err := svc.ReverseTransfer(context.Background(), txnID, walletID); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if gotTotal != tc.wantTotal || gotAvailable != tc.wantAvailable {
+				t.Errorf("sender refund = total %d, available %d; want total %d, available %d", gotTotal, gotAvailable, tc.wantTotal, tc.wantAvailable)
+			}
+		})
+	}
+}
+
 func TestReverseTransfer_Completed_InsufficientFundsForReversal(t *testing.T) {
 	txnID := uuid.New()
 	walletID := uuid.New()

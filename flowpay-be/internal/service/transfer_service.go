@@ -272,17 +272,26 @@ func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, 
 			}
 		}
 
+		hold, err := s.holdRepo.FindByTransactionID(ctx, txnID)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		debited := txn.Status == models.TransactionStatusCompleted || (hold != nil && hold.Status == models.HoldStatusSettled)
+
 		senderBalance, err := s.balanceRepo.FindOrCreate(ctx, tx, *txn.SenderWalletID, txn.Currency)
 		if err != nil {
 			return err
 		}
 
-		if err := s.balanceRepo.UpdateAmounts(ctx, tx, senderBalance.ID, txn.Amount, txn.Amount); err != nil {
+		var totalRefund int64
+		if debited {
+			totalRefund = txn.Amount
+		}
+		if err := s.balanceRepo.UpdateAmounts(ctx, tx, senderBalance.ID, totalRefund, txn.Amount); err != nil {
 			return err
 		}
 
-		hold, err := s.holdRepo.FindByTransactionID(ctx, txnID)
-		if err == nil && hold != nil {
+		if hold != nil {
 			if err := s.holdRepo.UpdateStatus(ctx, tx, hold.ID, models.HoldStatusReleased); err != nil {
 				return err
 			}
