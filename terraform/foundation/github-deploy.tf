@@ -76,6 +76,16 @@ data "aws_iam_policy_document" "app_role_boundary" {
     actions   = ["s3:PutObject", "s3:DeleteObject"]
     resources = ["${aws_s3_bucket.avatars.arn}/avatars/*"]
   }
+
+  statement {
+    actions   = ["ecs:UpdateService"]
+    resources = ["arn:aws:ecs:${var.region}:${local.account_id}:service/${var.project}/${var.project}-*"]
+  }
+
+  statement {
+    actions   = ["states:StartExecution"]
+    resources = ["arn:aws:states:${var.region}:${local.account_id}:stateMachine:${var.project}-*"]
+  }
 }
 
 resource "aws_iam_policy" "app_role_boundary" {
