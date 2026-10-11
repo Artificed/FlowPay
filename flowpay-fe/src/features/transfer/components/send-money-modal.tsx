@@ -2,7 +2,7 @@ import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { X } from "lucide-react"
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { transferService } from "../services"
 import { useCurrencies } from "@/features/wallet"
 import { Button } from "@/shared/ui/primitives/button"
@@ -44,7 +44,7 @@ type Props = {
 export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
   const [serverError, setServerError] = useState<string | null>(null)
   const { currencies, currencyError } = useCurrencies()
-  const idempotencyKey = useRef(crypto.randomUUID())
+  const [idempotencyKey] = useState(() => crypto.randomUUID())
 
   const {
     register,
@@ -66,7 +66,7 @@ export default function SendMoneyModal({ onClose, onSuccess, onFail }: Props) {
           currency: data.currency,
           note: data.note || undefined,
         },
-        idempotencyKey.current,
+        idempotencyKey,
       )
       onSuccess()
       onClose()

@@ -55,7 +55,9 @@ export function streamTransactions(handlers: {
             handlers.onWalletUpdate(JSON.parse(msg.data) as Wallet)
             break
         }
-      } catch (err) { }
+      } catch (err) {
+        handlers.onError?.(err)
+      }
     },
     onerror(err) {
       handlers.onError?.(err)

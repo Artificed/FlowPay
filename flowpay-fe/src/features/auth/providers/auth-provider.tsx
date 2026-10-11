@@ -1,16 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { useState, useCallback, type ReactNode } from "react"
 import type { AuthResult, User } from "@/features/auth/types"
-
-type AuthContextValue = {
-  user: User | null
-  token: string | null
-  login: (result: AuthResult) => void
-  logout: () => void
-  updateUser: (user: User) => void
-  isAuthenticated: boolean
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+import { AuthContext } from "./auth-context"
 
 const TOKEN_KEY = "flowpay_token"
 const USER_KEY = "flowpay_user"
@@ -52,10 +42,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider")
-  return ctx
 }
