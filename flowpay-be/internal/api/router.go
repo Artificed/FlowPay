@@ -20,9 +20,11 @@ type Handlers struct {
 }
 
 func NewRouter(handlers Handlers, jwtSecret string, corsOrigins []string) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
 
 	r.Use(middleware.RequestID())
+	r.Use(middleware.Logger())
+	r.Use(middleware.Recovery())
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     corsOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
