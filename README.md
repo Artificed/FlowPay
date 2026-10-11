@@ -133,7 +133,6 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 
 ## Screenshots
 
-<img width="1920" height="999" alt="FlowPay - Login" src="https://github.com/user-attachments/assets/bf11c2d2-1d46-430d-b2f3-f25ab1a8a0ec" />
 <img width="1511" height="867" alt="FlowPay - Dashboard" src="https://github.com/user-attachments/assets/793305d3-81e1-4aee-a55e-e2796f9ac93f" />
 <img width="1511" height="867" alt="FlowPay - Transactions" src="https://github.com/user-attachments/assets/a4d3e71e-95fe-426e-bb19-55bb1ebcdc39" />
 <img width="1511" height="866" alt="FlowPay - Scheduled Transactions" src="https://github.com/user-attachments/assets/4d095eb5-4554-4228-a80d-e126aa36888a" />
