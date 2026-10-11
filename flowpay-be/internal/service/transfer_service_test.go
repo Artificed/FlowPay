@@ -234,6 +234,23 @@ func TestCreateTransaction_Success(t *testing.T) {
 	}
 }
 
+func TestCreateTransaction_KeepsTheCorrelationID(t *testing.T) {
+	var saved *models.Transaction
+	txRepo := &mockTxRepo{
+		createFn: func(txn *models.Transaction) error {
+			saved = txn
+			return nil
+		},
+	}
+	svc := NewTransferService(nil, &mockWalletRepo{}, &mockBalanceRepo{}, &mockHoldRepo{}, txRepo)
+	if _, err := svc.CreateTransaction(context.Background(), TransferInput{Amount: 100, Currency: "USD", CorrelationID: "req-123"}, uuid.New()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if saved.CorrelationID != "req-123" {
+		t.Errorf("correlation_id = %q, want %q", saved.CorrelationID, "req-123")
+	}
+}
+
 func TestCreateTransaction_RetryOnUniqueViolation(t *testing.T) {
 	calls := 0
 	txRepo := &mockTxRepo{
