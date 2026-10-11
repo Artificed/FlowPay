@@ -60,7 +60,7 @@ func Load() *Config {
 		JWTExpiryHours:      jwtExpiry,
 		TemporalAddress:     getEnv("TEMPORAL_ADDRESS", "temporal:7233"),
 		CORSOrigins:         corsOrigins,
-		StorageEndpoint:     getEnv("STORAGE_ENDPOINT", "seaweedfs:8333"),
+		StorageEndpoint:     getEnv("STORAGE_ENDPOINT", ""),
 		StorageRegion:       getEnv("STORAGE_REGION", "us-east-1"),
 		StorageUseSSL:       getEnvBool("STORAGE_USE_SSL", false),
 		StoragePublicURL:    getEnv("STORAGE_PUBLIC_URL", "http://localhost:8333/flowpay"),

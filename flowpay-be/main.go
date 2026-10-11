@@ -58,7 +58,7 @@ func main() {
 	txRepo := repository.NewTransactionRepository(db)
 	spRepo := repository.NewScheduledPaymentRepository(db)
 
-	storageSvc, err := storage.NewStorageService(storage.Options{
+	storageSvc, err := storage.NewStorageService(context.Background(), storage.Options{
 		Endpoint:  cfg.StorageEndpoint,
 		Region:    cfg.StorageRegion,
 		UseSSL:    cfg.StorageUseSSL,
