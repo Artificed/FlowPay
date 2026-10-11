@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useEffectEvent } from "react"
 import { streamTransactions } from "../services"
 import type { Transaction } from "../types"
 import type { Wallet } from "@/features/wallet/types"
@@ -12,8 +12,13 @@ type Handlers = {
 }
 
 export function useSSETransactions(handlers: Handlers): void {
-  const handlersRef = useRef(handlers)
-  handlersRef.current = handlers
+  const handleSnapshot = useEffectEvent((txns: Transaction[], reconnected: boolean) => {
+    if (reconnected) handlers.onReconnect?.()
+    handlers.onSnapshot?.(txns)
+  })
+  const handleTransactionUpdate = useEffectEvent((updated: Transaction) => handlers.onTransactionUpdate(updated))
+  const handleWalletUpdate = useEffectEvent((wallet: Wallet) => handlers.onWalletUpdate(wallet))
+  const handleError = useEffectEvent((err: unknown) => handlers.onError?.(err))
 
   useEffect(() => {
     const ctrl = new AbortController()
@@ -21,18 +26,18 @@ export function useSSETransactions(handlers: Handlers): void {
     streamTransactions({
       signal: ctrl.signal,
       onSnapshot(txns) {
-        if (connected) handlersRef.current.onReconnect?.()
+        const reconnected = connected
         connected = true
-        handlersRef.current.onSnapshot?.(txns)
+        handleSnapshot(txns, reconnected)
       },
       onTransactionUpdate(updated) {
-        handlersRef.current.onTransactionUpdate(updated)
+        handleTransactionUpdate(updated)
       },
       onWalletUpdate(w) {
-        handlersRef.current.onWalletUpdate(w)
+        handleWalletUpdate(w)
       },
       onError(err) {
-        handlersRef.current.onError?.(err)
+        handleError(err)
       },
     })
     return () => ctrl.abort()
