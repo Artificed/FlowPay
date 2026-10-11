@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/repository"
 	"flowpay-be/internal/storage"
+	"fmt"
 	"io"
 	"strings"
 
@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	ErrInvalidImageType  = errors.New("only jpeg, png, and webp images are allowed")
-	ErrImageTooLarge     = errors.New("image must be 5MB or less")
-	ErrInvalidPassword   = errors.New("current password is incorrect")
-	ErrPasswordReused    = errors.New("new password must be different from your current password")
+	ErrInvalidImageType = errors.New("only jpeg, png, and webp images are allowed")
+	ErrImageTooLarge    = errors.New("image must be 5MB or less")
+	ErrInvalidPassword  = errors.New("current password is incorrect")
+	ErrPasswordReused   = errors.New("new password must be different from your current password")
 )
 
 const maxAvatarSize = 5 * 1024 * 1024

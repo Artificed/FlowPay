@@ -13,7 +13,7 @@ import (
 )
 
 type Activities struct {
-	transferSvc        service.TransferService
+	transferSvc          service.TransferService
 	scheduledPaymentRepo repository.ScheduledPaymentRepository
 }
 
