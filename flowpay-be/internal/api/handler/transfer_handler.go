@@ -6,6 +6,7 @@ import (
 	"flowpay-be/internal/api/middleware"
 	"flowpay-be/internal/currency"
 	"flowpay-be/internal/models"
+	"flowpay-be/internal/reqctx"
 	"flowpay-be/internal/service"
 	temporalworker "flowpay-be/internal/temporal"
 	"fmt"
@@ -73,6 +74,7 @@ func (h *TransferHandler) CreateTransfer(c *gin.Context) {
 			Amount:            req.Amount,
 			Currency:          req.Currency,
 			Note:              req.Note,
+			CorrelationID:     reqctx.GetRequestID(c.Request.Context()),
 		},
 	}
 

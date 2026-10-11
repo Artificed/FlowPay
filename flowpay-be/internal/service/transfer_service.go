@@ -7,7 +7,6 @@ import (
 	"flowpay-be/internal/currency"
 	"flowpay-be/internal/models"
 	"flowpay-be/internal/repository"
-	"flowpay-be/internal/reqctx"
 	"fmt"
 	"time"
 
@@ -33,6 +32,7 @@ type TransferInput struct {
 	Amount            int64
 	Currency          string
 	Note              string
+	CorrelationID     string
 }
 
 type TransferValidation struct {
@@ -108,7 +108,7 @@ func (s *transferService) ValidateTransfer(ctx context.Context, input TransferIn
 
 func (s *transferService) CreateTransaction(ctx context.Context, input TransferInput, senderWalletID uuid.UUID) (*models.Transaction, error) {
 	txn := &models.Transaction{
-		CorrelationID:     reqctx.GetRequestID(ctx),
+		CorrelationID:     input.CorrelationID,
 		SenderWalletID:    &senderWalletID,
 		RecipientWalletID: input.RecipientWalletID,
 		Amount:            input.Amount,

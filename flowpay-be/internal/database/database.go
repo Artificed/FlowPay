@@ -11,7 +11,7 @@ import (
 
 func Connect(dsn string) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Warn),
+		Logger: newLogger(),
 	})
 	if err != nil {
 		return nil, err
@@ -29,4 +29,13 @@ func Connect(dsn string) (*gorm.DB, error) {
 
 	slog.Info("database: connected")
 	return db, nil
+}
+
+func newLogger() logger.Interface {
+	return logger.NewSlogLogger(slog.Default(), logger.Config{
+		LogLevel:                  logger.Warn,
+		SlowThreshold:             200 * time.Millisecond,
+		IgnoreRecordNotFoundError: true,
+		ParameterizedQueries:      true,
+	})
 }
