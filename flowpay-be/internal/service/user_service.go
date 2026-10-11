@@ -59,7 +59,7 @@ func (s *userService) UpdateAvatar(ctx context.Context, userID uuid.UUID, conten
 		return nil, err
 	}
 
-	key, err := s.storageSvc.UploadAvatar(ctx, userID, contentType, &buf, n)
+	key, err := s.storageSvc.UploadAvatar(ctx, userID, contentType, bytes.NewReader(buf.Bytes()), n)
 	if err != nil {
 		return nil, err
 	}

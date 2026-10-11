@@ -3,17 +3,21 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type StorageService struct {
-	client    *minio.Client
+	client    *s3.Client
 	bucket    string
 	publicURL string
 }
@@ -28,32 +32,44 @@ type Options struct {
 	SecretKey string
 }
 
-func NewStorageService(opts Options) (*StorageService, error) {
-	creds := credentials.NewChainCredentials([]credentials.Provider{&credentials.EnvAWS{}, &credentials.IAM{}})
+func NewStorageService(ctx context.Context, opts Options) (*StorageService, error) {
+	loadOpts := []func(*awsconfig.LoadOptions) error{awsconfig.WithRegion(opts.Region)}
 	if opts.AccessKey != "" {
-		creds = credentials.NewStaticV4(opts.AccessKey, opts.SecretKey, "")
+		loadOpts = append(loadOpts, awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(opts.AccessKey, opts.SecretKey, "")))
+	}
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, loadOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("storage: load aws config: %w", err)
 	}
 
-	client, err := minio.New(opts.Endpoint, &minio.Options{
-		Creds:  creds,
-		Secure: opts.UseSSL,
-		Region: opts.Region,
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if opts.Endpoint == "" {
+			return
+		}
+		scheme := "http"
+		if opts.UseSSL {
+			scheme = "https"
+		}
+		o.BaseEndpoint = aws.String(scheme + "://" + opts.Endpoint)
+		o.UsePathStyle = true
 	})
-	if err != nil {
-		return nil, fmt.Errorf("storage: create client: %w", err)
-	}
 	return &StorageService{client: client, bucket: opts.Bucket, publicURL: strings.TrimSuffix(opts.PublicURL, "/")}, nil
 }
 
 func (s *StorageService) EnsureBucket(ctx context.Context) error {
-	exists, err := s.client.BucketExists(ctx, s.bucket)
-	if err != nil {
-		return fmt.Errorf("storage: check bucket: %w", err)
-	}
-	if !exists {
-		if err := s.client.MakeBucket(ctx, s.bucket, minio.MakeBucketOptions{}); err != nil {
+	_, err := s.client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(s.bucket)})
+	var notFound *types.NotFound
+	switch {
+	case errors.As(err, &notFound):
+		input := &s3.CreateBucketInput{Bucket: aws.String(s.bucket)}
+		if region := s.client.Options().Region; region != "us-east-1" {
+			input.CreateBucketConfiguration = &types.CreateBucketConfiguration{LocationConstraint: types.BucketLocationConstraint(region)}
+		}
+		if _, err := s.client.CreateBucket(ctx, input); err != nil {
 			return fmt.Errorf("storage: create bucket: %w", err)
 		}
+	case err != nil:
+		return fmt.Errorf("storage: check bucket: %w", err)
 	}
 
 	policy := map[string]any{
@@ -71,16 +87,23 @@ func (s *StorageService) EnsureBucket(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("storage: marshal policy: %w", err)
 	}
-	if err := s.client.SetBucketPolicy(ctx, s.bucket, string(policyJSON)); err != nil {
+	if _, err := s.client.PutBucketPolicy(ctx, &s3.PutBucketPolicyInput{
+		Bucket: aws.String(s.bucket),
+		Policy: aws.String(string(policyJSON)),
+	}); err != nil {
 		return fmt.Errorf("storage: set bucket policy: %w", err)
 	}
 	return nil
 }
 
-func (s *StorageService) UploadAvatar(ctx context.Context, userID uuid.UUID, contentType string, r io.Reader, size int64) (string, error) {
+func (s *StorageService) UploadAvatar(ctx context.Context, userID uuid.UUID, contentType string, body io.ReadSeeker, size int64) (string, error) {
 	key := fmt.Sprintf("avatars/%s/%s", userID, uuid.NewString())
-	_, err := s.client.PutObject(ctx, s.bucket, key, r, size, minio.PutObjectOptions{
-		ContentType: contentType,
+	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(key),
+		Body:          body,
+		ContentLength: aws.Int64(size),
+		ContentType:   aws.String(contentType),
 	})
 	if err != nil {
 		return "", fmt.Errorf("storage: upload avatar: %w", err)
@@ -89,7 +112,10 @@ func (s *StorageService) UploadAvatar(ctx context.Context, userID uuid.UUID, con
 }
 
 func (s *StorageService) DeleteObject(ctx context.Context, key string) error {
-	if err := s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{}); err != nil {
+	if _, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	}); err != nil {
 		return fmt.Errorf("storage: delete object: %w", err)
 	}
 	return nil
