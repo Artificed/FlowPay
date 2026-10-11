@@ -121,7 +121,7 @@ A React single-page app built with Vite:
 
 ![FlowPay - Transactions](docs/app/transactions.png)
 
-![FlowPay - Scheduled payments](docs/app/scheduled-tansactions.png)
+![FlowPay - Scheduled payments](docs/app/scheduled-transactions.png)
 
 ![FlowPay - Profile](docs/app/profile.png)
 
