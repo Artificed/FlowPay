@@ -112,7 +112,7 @@ A React single-page app built with Vite:
 | **Cloud** | AWS: ECS on Fargate, RDS, ALB, CloudFront, S3, Route 53, ACM, Cloud Map, Secrets Manager, ECR, CloudWatch |
 | **Infrastructure as code** | Terraform |
 | **CI/CD** | GitHub Actions with OIDC |
-| **Local development** | Docker Compose, Nginx, MinIO |
+| **Local development** | Docker Compose, Nginx, SeaweedFS |
 | **Security** | JWT, bcrypt |
 
 ---
