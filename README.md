@@ -44,25 +44,25 @@ A transfer is a Temporal workflow that runs five activities in order: `ValidateT
 
 ## Features
 
-### Payment & Wallet Engine
-- **Multi-Currency Wallets** - Automatic wallet creation upon user registration supporting multiple currency balances.
-- **Idempotent Transactions** - Secure money transfers through discrete, idempotent steps (Validate, Create, Hold, Debit, Credit).
-- **Saga Pattern Reversals** - Fully implemented `ReverseTransfer` acting as a compensating transaction that safely rolls back funds, debits recipients, and releases holds on failure.
-- **Real-time Synchronization** - Server-Sent Events (SSE) streaming updates to the dashboard for live transaction and wallet balance states.
-- **Scheduled Payments** - Schedule one-off or recurring payments with full lifecycle management (create, pause, reactivate, cancel), backed by a dedicated Temporal workflow with cron-style scheduling.
+### Payments and wallets
+- **Multi-currency wallets** - Each user has one wallet, with a balance per currency created the first time money arrives in that currency.
+- **Transfers** - Every transfer request carries an `Idempotency-Key`, so a retried request doesn't send money twice.
+- **Reversals** - The sender can reverse a completed transfer, which moves the money back as a compensating transaction.
+- **Live updates** - The dashboard gets transaction and balance updates over Server-Sent Events, checked every 2 seconds.
+- **Recurring payments** - Payments every N days that can be cancelled and reactivated, each run by a long-lived Temporal workflow.
 
-### Robust Backend Features
-- **Authentication** - Secure user registration and login flows using JWT (`golang-jwt/jwt/v5`).
-- **Structured Logging & Tracing** - Built using Go's `log/slog` with JSON handlers, coupled with `X-Request-ID` middleware for transaction correlation.
-- **Graceful Shutdown** - SIGINT/SIGTERM handling for draining in-flight HTTP requests and Temporal workers safely.
-- **API Documentation** - Fully documented REST API served via Swagger.
+### Backend
+- **Authentication** - JWT (`golang-jwt/jwt/v5`) with bcrypt-hashed passwords.
+- **Logging** - App logs in JSON through `log/slog`, and an `X-Request-ID` on every response.
+- **Graceful shutdown** - On SIGINT or SIGTERM, the backend stops the Temporal worker before the HTTP server.
+- **API docs** - Swagger at `/docs` when running locally.
+- **Tests** - Unit tests for the services and the workflows, including each failure path, and Vitest tests for the frontend.
 
-### Modern Dashboard UI
-- **Interactive Interface** - Built with React 19, Tailwind CSS 4, and `shadcn/ui` for a responsive, modern aesthetic.
-- **Live Transaction Monitoring** - Real-time displays for transaction histories, pending transfers, and live balance updates.
-- **Dynamic Modals** - Intuitive popups for sending money and depositing funds.
-- **Profile Management** - Avatar upload/delete (S3-backed, MinIO locally), display name, email, and password editing with a glassmorphism profile card.
-- **Full Page Suite** — Home (balance overview, activity chart, recent transactions), Transactions (date-grouped history, full-text search, detail modal), Scheduled Payments (status filters, stats cards, lifecycle controls), and Profile pages.
+### Dashboard
+- **Home** - Balance per currency, an activity chart, money in and out, and recent transactions.
+- **Transactions** - Date-grouped history with type filters, search by note or reference, and a detail view.
+- **Recurring payments** - Status filters, summary cards and controls to cancel and reactivate.
+- **Profile** - Avatar upload to S3, display name and password changes.
 
 ---
 
