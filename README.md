@@ -34,6 +34,14 @@ The frontend is a React build in a private S3 bucket behind CloudFront at `flowp
 
 ---
 
+## How a transfer runs
+
+A transfer is a Temporal workflow that runs five activities in order: `ValidateTransfer`, `CreateTransaction`, `HoldFunds`, `DebitSender` and `CreditRecipient`. Activities retry with exponential backoff, and business errors like insufficient funds are non-retryable, so they fail the workflow right away. If the debit or the credit fails, the workflow runs `ReverseTransfer` as a compensating step, which releases the hold and returns the sender's money.
+
+![A transfer workflow in the Temporal Web UI](docs/app/workflow-detail.png)
+
+---
+
 ## Features
 
 ### Payment & Wallet Engine
@@ -42,11 +50,6 @@ The frontend is a React build in a private S3 bucket behind CloudFront at `flowp
 - **Saga Pattern Reversals** - Fully implemented `ReverseTransfer` acting as a compensating transaction that safely rolls back funds, debits recipients, and releases holds on failure.
 - **Real-time Synchronization** - Server-Sent Events (SSE) streaming updates to the dashboard for live transaction and wallet balance states.
 - **Scheduled Payments** - Schedule one-off or recurring payments with full lifecycle management (create, pause, reactivate, cancel), backed by a dedicated Temporal workflow with cron-style scheduling.
-
-### Workflow Orchestration (Temporal)
-- **Deterministic Workflows** - Multi-step payment workflows orchestrated deterministically, independent of direct DB calls within the workflow definition.
-- **Resilient Activities** - Business logic encapsulated in retryable Temporal activities with exponential backoffs and timeouts.
-- **Graceful Failure Handling** - Automatic triggering of compensating operations (Saga) mid-workflow upon component failure.
 
 ### Robust Backend Features
 - **Authentication** - Secure user registration and login flows using JWT (`golang-jwt/jwt/v5`).
@@ -169,8 +172,6 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 ![FlowPay - Profile](docs/app/profile.png)
 
 ![FlowPay - Workflows](docs/app/workflows.png)
-
-![FlowPay - Workflow Detail](docs/app/workflow-detail.png)
 
 ---
 
