@@ -45,7 +45,7 @@ func TestLogger_WritesOneJSONLinePerRequest(t *testing.T) {
 	r, logs := newLoggedRouter(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/ok", nil)
-	req.Header.Set(RequestIDHeader, "req-123")
+	req.Header.Set(RequestIDHeader, "4b2f9f0e-6a43-4b8e-9f3c-2a1d5e6f7a8b")
 	r.ServeHTTP(httptest.NewRecorder(), req)
 
 	lines := logLines(t, logs)
@@ -53,7 +53,7 @@ func TestLogger_WritesOneJSONLinePerRequest(t *testing.T) {
 		t.Fatalf("expected 1 log line, got %d", len(lines))
 	}
 	line := lines[0]
-	if line["msg"] != "http: request" || line["request_id"] != "req-123" || line["status"] != float64(http.StatusCreated) || line["path"] != "/ok" {
+	if line["msg"] != "http: request" || line["request_id"] != "4b2f9f0e-6a43-4b8e-9f3c-2a1d5e6f7a8b" || line["status"] != float64(http.StatusCreated) || line["path"] != "/ok" {
 		t.Errorf("unexpected log line: %v", line)
 	}
 }
@@ -62,7 +62,7 @@ func TestRecovery_LogsThePanicAndReturns500(t *testing.T) {
 	r, logs := newLoggedRouter(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
-	req.Header.Set(RequestIDHeader, "req-456")
+	req.Header.Set(RequestIDHeader, "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a")
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
@@ -73,7 +73,7 @@ func TestRecovery_LogsThePanicAndReturns500(t *testing.T) {
 	if len(lines) != 2 {
 		t.Fatalf("expected a panic line and a request line, got %d lines", len(lines))
 	}
-	if lines[0]["msg"] != "http: panic recovered" || lines[0]["error"] != "boom" || lines[0]["request_id"] != "req-456" {
+	if lines[0]["msg"] != "http: panic recovered" || lines[0]["error"] != "boom" || lines[0]["request_id"] != "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a" {
 		t.Errorf("unexpected panic line: %v", lines[0])
 	}
 	if lines[1]["level"] != "ERROR" || lines[1]["status"] != float64(http.StatusInternalServerError) {
