@@ -1,154 +1,154 @@
 # FlowPay
 
-## Overview
+FlowPay is a digital wallet with multi-currency balances, deposits, transfers and recurring payments. Every transfer runs as a Temporal workflow made of small steps, and when a step fails partway through, a compensating step undoes the ones that already ran. The backend is Go, the frontend is React, and it runs on AWS (ECS Fargate, RDS, CloudFront), built with Terraform and deployed through GitHub Actions.
 
-FlowPay is a comprehensive digital wallet and payment processing system engineered for high reliability and consistency. Developed with a Go backend and a React/TypeScript frontend, it leverages Temporal orchestration to manage multi-step financial transactions securely. FlowPay features a complete client-server architecture with stateful transaction management, ensuring that payment operations are resilient to failures, utilizing a Saga pattern for robust compensating actions and reversals.
-
-## Features
-
-### Payment & Wallet Engine
-- **Multi-Currency Wallets** - Automatic wallet creation upon user registration supporting multiple currency balances.
-- **Idempotent Transactions** - Secure money transfers through discrete, idempotent steps (Validate, Create, Hold, Debit, Credit).
-- **Saga Pattern Reversals** - Fully implemented `ReverseTransfer` acting as a compensating transaction that safely rolls back funds, debits recipients, and releases holds on failure.
-- **Real-time Synchronization** - Server-Sent Events (SSE) streaming updates to the dashboard for live transaction and wallet balance states.
-- **Scheduled Payments** - Schedule one-off or recurring payments with full lifecycle management (create, pause, reactivate, cancel), backed by a dedicated Temporal workflow with cron-style scheduling.
-
-### Workflow Orchestration (Temporal)
-- **Deterministic Workflows** - Multi-step payment workflows orchestrated deterministically, independent of direct DB calls within the workflow definition.
-- **Resilient Activities** - Business logic encapsulated in retryable Temporal activities with exponential backoffs and timeouts.
-- **Graceful Failure Handling** - Automatic triggering of compensating operations (Saga) mid-workflow upon component failure.
-
-### Robust Backend Features
-- **Authentication** - Secure user registration and login flows using JWT (`golang-jwt/jwt/v5`).
-- **Structured Logging & Tracing** - Built using Go's `log/slog` with JSON handlers, coupled with `X-Request-ID` middleware for transaction correlation.
-- **Graceful Shutdown** - SIGINT/SIGTERM handling for draining in-flight HTTP requests and Temporal workers safely.
-- **API Documentation** - Fully documented REST API served via Swagger.
-
-### Modern Dashboard UI
-- **Interactive Interface** - Built with React 19, Tailwind CSS 4, and `shadcn/ui` for a responsive, modern aesthetic.
-- **Live Transaction Monitoring** - Real-time displays for transaction histories, pending transfers, and live balance updates.
-- **Dynamic Modals** - Intuitive popups for sending money and depositing funds.
-- **Profile Management** - Avatar upload/delete (S3-backed, MinIO locally), display name, email, and password editing with a glassmorphism profile card.
-- **Full Page Suite** — Home (balance overview, activity chart, recent transactions), Transactions (date-grouped history, full-text search, detail modal), Scheduled Payments (status filters, stats cards, lifecycle controls), and Profile pages.
+![FlowPay dashboard](docs/app/dashboard.png)
 
 ---
 
-## Architecture
+## Architecture on AWS
 
-FlowPay is architected as an orchestrated micro-system, cleanly separating the presentation layer, the API endpoints, and the workflow state machine.
+![FlowPay on AWS](docs/architecture/aws.png)
+
+The frontend is a React build in a private S3 bucket behind CloudFront at `flowpay.my.id`. The API at `api.flowpay.my.id` is an Application Load Balancer in front of the Go backend on ECS Fargate, and the backend starts every transfer as a workflow on a self-hosted Temporal server, also on Fargate. Both keep their data in RDS PostgreSQL, and inside the VPC everything except the load balancer runs in private subnets.
+
+### Design decisions
+
+- **No NAT gateway.** The private subnets have no internet access. ECS tasks reach ECR, CloudWatch Logs and Secrets Manager through interface VPC endpoints, and S3 through a gateway endpoint.
+- **No stored AWS keys in CI.** GitHub Actions gets short-lived credentials through OIDC, and each workflow assumes its own IAM role. The deploy role only trusts jobs in the `production` environment, which only `main` can use.
+- **A deploy role that can't escalate.** The role that runs Terraform gets only the actions the app layer needs, scoped to FlowPay's names where AWS allows it. Every IAM role it creates has to carry a permissions boundary that caps it at what the backend and Temporal need.
+- **Secrets live in Secrets Manager.** RDS generates the database password and keeps it there, Terraform generates the JWT secret as an ephemeral value so it never lands in the state, and ECS injects both into the containers at start.
+- **TLS at the edge and to the database.** The ALB only listens on 443 and only accepts TLS 1.2 and 1.3, and both the backend and Temporal verify the RDS server certificate.
+- **Temporal on Fargate.** The backend finds it at `temporal.flowpay.local` through Cloud Map. Schema setup and namespace creation run as containers in the same task, ordered with `dependsOn`.
+- **No cache invalidations.** Vite names assets after their content, so they're cached for a year as `immutable`, while `index.html` is sent with `no-cache`. A frontend deploy only uploads files.
+- **ARM64 throughout.** Images are built on ARM runners for Fargate on Graviton, tagged with the commit that last changed the backend, and pushed to an ECR repo with immutable tags. Temporal's images come through an ECR pull-through cache of Docker Hub.
+- **Two Terraform layers.** [`terraform/foundation/`](terraform/foundation) holds the shared pieces (VPC, DNS, certificates, ECR, CI roles), and [`terraform/app/`](terraform/app) holds everything that runs the app, reading foundation's outputs through remote state.
+
+### CI/CD
+
+![FlowPay CI/CD](docs/architecture/cicd.png)
+
+- [`backend-image.yml`](.github/workflows/backend-image.yml) builds the ARM64 backend image and pushes it to ECR when backend code changes on `main`.
+- [`frontend.yml`](.github/workflows/frontend.yml) builds the frontend and uploads it to S3 with the cache headers above when frontend code changes on `main`.
+- [`deploy.yml`](.github/workflows/deploy.yml) runs Terraform for the app layer from the Actions tab, after checking that the backend image is in ECR.
+
+---
+
+## How a transfer runs
+
+A transfer is a Temporal workflow that runs five activities in order: `ValidateTransfer`, `CreateTransaction`, `HoldFunds`, `DebitSender` and `CreditRecipient`. Activities retry with exponential backoff, and business errors like insufficient funds are non-retryable, so they fail the workflow right away. If the debit or the credit fails, the workflow runs `ReverseTransfer` as a compensating step, which releases the hold and returns the sender's money.
+
+![A transfer workflow in the Temporal Web UI](docs/app/workflow-detail.png)
+
+---
+
+## Features
+
+### Payments and wallets
+- **Multi-currency wallets** - Each user has one wallet, with a balance per currency created the first time money arrives in that currency.
+- **Transfers** - Every transfer request carries an `Idempotency-Key`, so a retried request doesn't send money twice.
+- **Reversals** - The sender can reverse a completed transfer, which moves the money back as a compensating transaction.
+- **Live updates** - The dashboard gets transaction and balance updates over Server-Sent Events, checked every 2 seconds.
+- **Recurring payments** - Payments every N days that can be cancelled and reactivated, each run by a long-lived Temporal workflow.
+
+### Backend
+- **Authentication** - JWT (`golang-jwt/jwt/v5`) with bcrypt-hashed passwords.
+- **Logging** - App logs in JSON through `log/slog`, and an `X-Request-ID` on every response.
+- **Graceful shutdown** - On SIGINT or SIGTERM, the backend stops the Temporal worker before the HTTP server.
+- **API docs** - Swagger at `/docs` when running locally.
+- **Tests** - Unit tests for the services and the workflows, including each failure path, and Vitest tests for the frontend.
+
+### Dashboard
+- **Home** - Balance per currency, an activity chart, money in and out, and recent transactions.
+- **Transactions** - Date-grouped history with type filters, search by note or reference, and a detail view.
+- **Recurring payments** - Status filters, summary cards and controls to cancel and reactivate.
+- **Profile** - Avatar upload to S3, display name and password changes.
+
+---
+
+## Code layout
 
 ```text
 FlowPay/
-├── flowpay-be/             # Go REST API & Temporal Workers
-├── flowpay-fe/             # React/Vite Frontend Web App
-├── temporal/               # Temporal Setup Scripts & Configurations
-├── docker-compose.yml      # Production infra composition
-└── docker-compose.dev.yml  # Local development infra
+├── flowpay-be/             # Go REST API and Temporal worker
+├── flowpay-fe/             # React frontend (Vite)
+├── temporal/               # Temporal setup scripts and dynamic config
+├── terraform/              # AWS infrastructure, foundation and app layers
+├── docs/                   # Screenshots and architecture diagrams
+├── .github/workflows/      # Image build, frontend upload, deploy
+├── docker-compose.yml      # Whole stack in containers, behind Nginx
+└── docker-compose.dev.yml  # Local development stack
 ```
 
-### Module Details
-
-#### Backend Module (`flowpay-be/`)
-A scalable Go server utilizing the Gin framework and GORM:
+### Backend (`flowpay-be/`)
+A Go server built on Gin and GORM:
 
 | Package | Description |
 |---------|-------------|
 | `api/handler/` | REST endpoint handlers bound to domain services. |
-| `service/` | Core business logic implementation for wallets, auth, and transfers. |
-| `temporal/` | Workflow definitions, Activity wrappers, and Worker initializations orchestrating side-effect logic outside the HTTP boundary. |
-| `repository/` | PostgreSQL database interactions via GORM. |
-| `config/` | Application configuration management. |
-| `models/` | Core domain entities. |
-| `storage/` | S3 object storage client for user avatars. |
+| `service/` | Business logic for wallets, auth and transfers. |
+| `temporal/` | Workflow definitions, activity wrappers and worker setup. |
+| `repository/` | PostgreSQL access through GORM. |
+| `config/` | Application configuration. |
+| `models/` | Domain entities. |
+| `storage/` | S3 client for user avatars. |
 
-#### Frontend Module (`flowpay-fe/`)
-A fast, modern React SPA leveraging Vite:
-- **State & Data Fetching**: Robust management using customized hooks for asynchronous behaviors.
-- **Real-Time Data**: `EventSource` connections listening to backend SSE streams.
-- **UI Components**: Formulated with `shadcn/ui`, `lucide-react`, and React Hook Form.
-
-#### Infrastructure
-- **PostgreSQL**: Primary data store for users, wallets, and transaction histories.
-- **Temporal Server**: External orchestration cluster managing the state, queues, and history of all payment workflows independently of the primary app server.
+### Frontend (`flowpay-fe/`)
+A React single-page app built with Vite:
+- **Data fetching**: an Axios client with a service module per feature.
+- **Live data**: `@microsoft/fetch-event-source` listening to the backend's SSE stream.
+- **UI components**: `shadcn/ui`, `lucide-react` and React Hook Form.
 
 ---
 
-## Technology Stack
+## Technology stack
 
 | Category | Technologies |
 |----------|--------------|
 | **Backend** | Go 1.25, Gin, GORM, Temporal Go SDK |
-| **Frontend** | React 19, TypeScript, Vite, TailwindCSS 4, shadcn/ui |
-| **Database** | PostgreSQL 17 |
-| **Orchestration**| Temporal Server v1.30.1 |
-| **Infrastructure**| Docker, Docker Compose, Nginx |
-| **Storage** | Amazon S3 for user avatars, MinIO locally |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS 4, shadcn/ui |
+| **Database** | PostgreSQL 17 on Amazon RDS |
+| **Orchestration** | Temporal 1.30.1, self-hosted |
+| **Cloud** | AWS: ECS on Fargate, RDS, ALB, CloudFront, S3, Route 53, ACM, Cloud Map, Secrets Manager, ECR, CloudWatch |
+| **Infrastructure as code** | Terraform |
+| **CI/CD** | GitHub Actions with OIDC |
+| **Local development** | Docker Compose, Nginx, MinIO |
 | **Security** | JWT, bcrypt |
-
----
-
-## Installation
-
-### Prerequisites
-- **Docker & Docker Compose**
-- **Go 1.25 or higher**
-- **Node.js 20 or higher**
-
-### Local Setup
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/yourusername/FlowPay.git
-cd FlowPay
-```
-
-2. **Start the Infrastructure (Temporal, Postgres, etc.):**
-```bash
-docker compose -f docker-compose.dev.yml up -d
-```
-
-3. **Run the Backend:**
-Open a terminal and execute the Go backend application.
-```bash
-cd flowpay-be
-go run main.go
-```
-
-4. **Run the Frontend:**
-Open a new terminal session.
-```bash
-cd flowpay-fe
-npm install
-npm run dev
-```
-
-### Configuration
-You may configure environment settings by duplicating the template:
-```bash
-cp .env.example .env
-```
-Ensure configurations match your active PostgreSQL setup and Temporal connection parameters.
 
 ---
 
 ## Screenshots
 
-<img width="1920" height="999" alt="FlowPay - Login" src="https://github.com/user-attachments/assets/bf11c2d2-1d46-430d-b2f3-f25ab1a8a0ec" />
-<img width="1511" height="867" alt="FlowPay - Dashboard" src="https://github.com/user-attachments/assets/793305d3-81e1-4aee-a55e-e2796f9ac93f" />
-<img width="1511" height="867" alt="FlowPay - Transactions" src="https://github.com/user-attachments/assets/a4d3e71e-95fe-426e-bb19-55bb1ebcdc39" />
-<img width="1511" height="866" alt="FlowPay - Scheduled Transactions" src="https://github.com/user-attachments/assets/4d095eb5-4554-4228-a80d-e126aa36888a" />
-<img width="1510" height="864" alt="FlowPay - Profile" src="https://github.com/user-attachments/assets/5177a4ac-bcd5-40f6-9eb3-d5656c53003c" />
-<img width="1920" height="999" alt="FlowPay - Workflows" src="https://github.com/user-attachments/assets/a67a5f81-7690-4556-b897-660bd61cb2d0" />
-<img width="1920" height="999" alt="FlowPay - Workflow Detail" src="https://github.com/user-attachments/assets/64f4cc2f-c0a4-44e2-bf71-6cc1b7f7d3de" />
+![FlowPay - Transactions](docs/app/transactions.png)
+
+![FlowPay - Scheduled payments](docs/app/scheduled-tansactions.png)
+
+![FlowPay - Profile](docs/app/profile.png)
+
+![FlowPay - Workflows](docs/app/workflows.png)
 
 ---
 
-## Usage
+## Running locally
 
-1. **Access the Web Dashboard** at `http://localhost:5173`.
-2. **Register a new account** (which automatically provisions a multi-currency wallet).
-3. **Deposit funds** into the wallet using the Dashboard modal.
-4. **Initiate a Transfer** to another registered user using discrete money movements.
-5. **Monitor Orchestration**: Open the Temporal Web UI at `http://localhost:8233` to view the real-time execution of the background Saga workflow, tracking retry attempts, activity timelines, and fault-toleration states.
-6. **Schedule a Payment**: Navigate to the Scheduled Payments page to create a future or recurring payment, then pause, reactivate, or cancel it from the same dashboard.
-7. **Manage your Profile**: Visit the Profile page to upload an avatar, update your display name or email, and change your password.
+### Prerequisites
+- **Docker and Docker Compose**
+
+### Setup
+
+```bash
+git clone https://github.com/Artificed/FlowPay.git
+cd FlowPay
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+### Usage
+
+1. **Open the dashboard** at `http://localhost:5173`.
+2. **Register an account**, which creates your wallet.
+3. **Deposit funds** from the dashboard.
+4. **Send a transfer** to another registered user.
+5. **Watch the workflow** in the Temporal Web UI at `http://localhost:8233`, including retries and activity timelines.
+6. **Set up a recurring payment** from the Scheduled page, then cancel and reactivate it.
+7. **Manage your profile** by uploading an avatar and changing your display name or password.
