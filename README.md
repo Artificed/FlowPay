@@ -117,50 +117,6 @@ A React single-page app built with Vite:
 
 ---
 
-## Installation
-
-### Prerequisites
-- **Docker & Docker Compose**
-- **Go 1.25 or higher**
-- **Node.js 20 or higher**
-
-### Local Setup
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/yourusername/FlowPay.git
-cd FlowPay
-```
-
-2. **Start the Infrastructure (Temporal, Postgres, etc.):**
-```bash
-docker compose -f docker-compose.dev.yml up -d
-```
-
-3. **Run the Backend:**
-Open a terminal and execute the Go backend application.
-```bash
-cd flowpay-be
-go run main.go
-```
-
-4. **Run the Frontend:**
-Open a new terminal session.
-```bash
-cd flowpay-fe
-npm install
-npm run dev
-```
-
-### Configuration
-You may configure environment settings by duplicating the template:
-```bash
-cp .env.example .env
-```
-Ensure configurations match your active PostgreSQL setup and Temporal connection parameters.
-
----
-
 ## Screenshots
 
 ![FlowPay - Transactions](docs/app/transactions.png)
@@ -173,12 +129,26 @@ Ensure configurations match your active PostgreSQL setup and Temporal connection
 
 ---
 
-## Usage
+## Running locally
 
-1. **Access the Web Dashboard** at `http://localhost:5173`.
-2. **Register a new account** (which automatically provisions a multi-currency wallet).
-3. **Deposit funds** into the wallet using the Dashboard modal.
-4. **Initiate a Transfer** to another registered user using discrete money movements.
-5. **Monitor Orchestration**: Open the Temporal Web UI at `http://localhost:8233` to view the real-time execution of the background Saga workflow, tracking retry attempts, activity timelines, and fault-toleration states.
-6. **Schedule a Payment**: Navigate to the Scheduled Payments page to create a future or recurring payment, then pause, reactivate, or cancel it from the same dashboard.
-7. **Manage your Profile**: Visit the Profile page to upload an avatar, update your display name or email, and change your password.
+### Prerequisites
+- **Docker and Docker Compose**
+
+### Setup
+
+```bash
+git clone https://github.com/Artificed/FlowPay.git
+cd FlowPay
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+### Usage
+
+1. **Open the dashboard** at `http://localhost:5173`.
+2. **Register an account**, which creates your wallet.
+3. **Deposit funds** from the dashboard.
+4. **Send a transfer** to another registered user.
+5. **Watch the workflow** in the Temporal Web UI at `http://localhost:8233`, including retries and activity timelines.
+6. **Set up a recurring payment** from the Scheduled page, then cancel and reactivate it.
+7. **Manage your profile** by uploading an avatar and changing your display name or password.
