@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, act } from "@testing-library/react"
-import { AuthProvider, useAuth } from "./auth-provider"
+import { AuthProvider } from "./auth-provider"
+import { useAuth } from "@/features/auth/hooks/use-auth"
 import type { AuthResult } from "@/features/auth/types"
 
 const mockUser = { id: "u1", email: "dummy@google.com", display_name: "Dummy", avatar_url: null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" }
