@@ -82,7 +82,7 @@ func ReverseTransferWorkflow(ctx workflow.Context, input ReverseTransferWorkflow
 
 	var a *Activities
 
-	if err := workflow.ExecuteActivity(ctx, a.CompensateTransferActivity, input.TransactionID, input.RequesterWalletID).Get(ctx, nil); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.ReverseTransferActivity, input.TransactionID, input.RequesterWalletID).Get(ctx, nil); err != nil {
 		return nil, err
 	}
 

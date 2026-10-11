@@ -48,6 +48,7 @@ type TransferService interface {
 	CreditRecipient(ctx context.Context, txnID uuid.UUID) error
 	MarkTransactionFailed(ctx context.Context, txnID uuid.UUID) error
 	ReverseTransfer(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) (*models.Transaction, error)
+	CompensateTransfer(ctx context.Context, txnID uuid.UUID, senderWalletID uuid.UUID) error
 	GetTransaction(ctx context.Context, id, walletID uuid.UUID) (*models.Transaction, error)
 	ListTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]models.Transaction, error)
 	CountTransactions(ctx context.Context, walletID uuid.UUID) (int64, error)
@@ -236,12 +237,21 @@ func (s *transferService) CreditRecipient(ctx context.Context, txnID uuid.UUID) 
 }
 
 func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) (*models.Transaction, error) {
+	return s.reverse(ctx, txnID, requesterWalletID, models.TransactionStatusCompleted)
+}
+
+func (s *transferService) CompensateTransfer(ctx context.Context, txnID uuid.UUID, senderWalletID uuid.UUID) error {
+	_, err := s.reverse(ctx, txnID, senderWalletID, models.TransactionStatusProcessing)
+	return err
+}
+
+func (s *transferService) reverse(ctx context.Context, txnID, senderWalletID uuid.UUID, reversibleStatus models.TransactionStatus) (*models.Transaction, error) {
 	txn, err := s.txRepo.FindByID(ctx, txnID)
 	if err != nil {
 		return nil, fmt.Errorf("transaction not found: %w", err)
 	}
 
-	if txn.SenderWalletID == nil || *txn.SenderWalletID != requesterWalletID {
+	if txn.SenderWalletID == nil || *txn.SenderWalletID != senderWalletID {
 		return nil, ErrNotTransactionSender
 	}
 
@@ -249,7 +259,7 @@ func (s *transferService) ReverseTransfer(ctx context.Context, txnID uuid.UUID, 
 		return txn, nil
 	}
 
-	if txn.Status != models.TransactionStatusCompleted && txn.Status != models.TransactionStatusProcessing {
+	if txn.Status != reversibleStatus {
 		return nil, ErrTransactionNotReversible
 	}
 

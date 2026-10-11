@@ -55,7 +55,11 @@ func (a *Activities) FailTransactionActivity(ctx context.Context, txnID uuid.UUI
 }
 
 func (a *Activities) CompensateTransferActivity(ctx context.Context, txnID uuid.UUID, senderWalletID uuid.UUID) error {
-	_, err := a.transferSvc.ReverseTransfer(ctx, txnID, senderWalletID)
+	return wrapBusinessError(a.transferSvc.CompensateTransfer(ctx, txnID, senderWalletID))
+}
+
+func (a *Activities) ReverseTransferActivity(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) error {
+	_, err := a.transferSvc.ReverseTransfer(ctx, txnID, requesterWalletID)
 	return wrapBusinessError(err)
 }
 

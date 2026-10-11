@@ -403,6 +403,7 @@ func TestReverseTransfer_AlreadyReversed_IsIdempotent(t *testing.T) {
 func TestReverseTransfer_NotReversible(t *testing.T) {
 	for _, status := range []models.TransactionStatus{
 		models.TransactionStatusPending,
+		models.TransactionStatusProcessing,
 		models.TransactionStatusFailed,
 	} {
 		t.Run(string(status), func(t *testing.T) {
@@ -425,7 +426,7 @@ func TestReverseTransfer_NotReversible(t *testing.T) {
 	}
 }
 
-func TestReverseTransfer_Processing_SkipsRecipientDebit(t *testing.T) {
+func TestCompensateTransfer_SkipsRecipientDebit(t *testing.T) {
 	txnID := uuid.New()
 	walletID := uuid.New()
 	txn := &models.Transaction{
@@ -471,7 +472,7 @@ func TestReverseTransfer_Processing_SkipsRecipientDebit(t *testing.T) {
 	}
 
 	svc := NewTransferService(db, &mockWalletRepo{}, balanceRepo, holdRepo, txRepo)
-	_, err := svc.ReverseTransfer(context.Background(), txnID, walletID)
+	err := svc.CompensateTransfer(context.Background(), txnID, walletID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -483,7 +484,24 @@ func TestReverseTransfer_Processing_SkipsRecipientDebit(t *testing.T) {
 	}
 }
 
-func TestReverseTransfer_Processing_RefundsOnlyWhatWasTaken(t *testing.T) {
+func TestCompensateTransfer_Completed_IsNotCompensable(t *testing.T) {
+	txnID := uuid.New()
+	walletID := uuid.New()
+	txn := &models.Transaction{
+		Base:           models.Base{ID: txnID},
+		SenderWalletID: &walletID,
+		Status:         models.TransactionStatusCompleted,
+	}
+	txRepo := &mockTxRepo{
+		findByIDFn: func(_ uuid.UUID) (*models.Transaction, error) { return txn, nil },
+	}
+	svc := NewTransferService(nil, &mockWalletRepo{}, &mockBalanceRepo{}, &mockHoldRepo{}, txRepo)
+	if err := svc.CompensateTransfer(context.Background(), txnID, walletID); !errors.Is(err, ErrTransactionNotReversible) {
+		t.Errorf("expected ErrTransactionNotReversible, got %v", err)
+	}
+}
+
+func TestCompensateTransfer_RefundsOnlyWhatWasTaken(t *testing.T) {
 	cases := []struct {
 		name          string
 		holdStatus    models.HoldStatus
@@ -533,7 +551,7 @@ func TestReverseTransfer_Processing_RefundsOnlyWhatWasTaken(t *testing.T) {
 			}
 
 			svc := NewTransferService(db, &mockWalletRepo{}, balanceRepo, holdRepo, txRepo)
-			if _, err := svc.ReverseTransfer(context.Background(), txnID, walletID); err != nil {
+			if err := svc.CompensateTransfer(context.Background(), txnID, walletID); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if gotTotal != tc.wantTotal || gotAvailable != tc.wantAvailable {
