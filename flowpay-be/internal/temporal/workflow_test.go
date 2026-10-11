@@ -137,7 +137,7 @@ func (s *WorkflowTestSuite) Test_ReverseTransferWorkflow_HappyPath() {
 		RequesterWalletID: uuid.New(),
 	}
 
-	s.env.OnActivity(a.CompensateTransferActivity, mock.Anything, input.TransactionID, input.RequesterWalletID).Return(nil)
+	s.env.OnActivity(a.ReverseTransferActivity, mock.Anything, input.TransactionID, input.RequesterWalletID).Return(nil)
 
 	s.env.ExecuteWorkflow(temporalworker.ReverseTransferWorkflow, input)
 
@@ -155,7 +155,7 @@ func (s *WorkflowTestSuite) Test_ReverseTransferWorkflow_CompensationFails_Retur
 		RequesterWalletID: uuid.New(),
 	}
 
-	s.env.OnActivity(a.CompensateTransferActivity, mock.Anything, input.TransactionID, input.RequesterWalletID).
+	s.env.OnActivity(a.ReverseTransferActivity, mock.Anything, input.TransactionID, input.RequesterWalletID).
 		Return(errors.New("compensation failed"))
 
 	s.env.ExecuteWorkflow(temporalworker.ReverseTransferWorkflow, input)

@@ -16,7 +16,7 @@ type mockScheduledPaymentRepo struct {
 	findByIDFn     func(id uuid.UUID) (*models.ScheduledPayment, error)
 	updateStatusFn func(id uuid.UUID, status models.ScheduledPaymentStatus) error
 	reactivateFn   func(id uuid.UUID, workflowID string, nextRunAt time.Time) error
-	isActiveFn     func(id uuid.UUID) (bool, error)
+	isActiveFn     func(id uuid.UUID, workflowID string) (bool, error)
 }
 
 func (m *mockScheduledPaymentRepo) Create(_ context.Context, sp *models.ScheduledPayment) error {
@@ -46,8 +46,8 @@ func (m *mockScheduledPaymentRepo) UpdateNextRunAt(_ context.Context, _ uuid.UUI
 func (m *mockScheduledPaymentRepo) Reactivate(_ context.Context, id uuid.UUID, workflowID string, nextRunAt time.Time) error {
 	return m.reactivateFn(id, workflowID, nextRunAt)
 }
-func (m *mockScheduledPaymentRepo) IsActive(_ context.Context, id uuid.UUID) (bool, error) {
-	return m.isActiveFn(id)
+func (m *mockScheduledPaymentRepo) IsActive(_ context.Context, id uuid.UUID, workflowID string) (bool, error) {
+	return m.isActiveFn(id, workflowID)
 }
 func (m *mockScheduledPaymentRepo) CancelWithReason(_ context.Context, _ uuid.UUID, _ string) error {
 	return nil

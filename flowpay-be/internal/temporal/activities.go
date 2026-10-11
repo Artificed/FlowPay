@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 )
 
@@ -54,7 +55,11 @@ func (a *Activities) FailTransactionActivity(ctx context.Context, txnID uuid.UUI
 }
 
 func (a *Activities) CompensateTransferActivity(ctx context.Context, txnID uuid.UUID, senderWalletID uuid.UUID) error {
-	_, err := a.transferSvc.ReverseTransfer(ctx, txnID, senderWalletID)
+	return wrapBusinessError(a.transferSvc.CompensateTransfer(ctx, txnID, senderWalletID))
+}
+
+func (a *Activities) ReverseTransferActivity(ctx context.Context, txnID uuid.UUID, requesterWalletID uuid.UUID) error {
+	_, err := a.transferSvc.ReverseTransfer(ctx, txnID, requesterWalletID)
 	return wrapBusinessError(err)
 }
 
@@ -63,7 +68,7 @@ func (a *Activities) CancelScheduledPaymentActivity(ctx context.Context, id uuid
 }
 
 func (a *Activities) CheckScheduledPaymentActiveActivity(ctx context.Context, id uuid.UUID) (bool, error) {
-	return a.scheduledPaymentRepo.IsActive(ctx, id)
+	return a.scheduledPaymentRepo.IsActive(ctx, id, activity.GetInfo(ctx).WorkflowExecution.ID)
 }
 
 func (a *Activities) UpdateScheduledPaymentNextRunActivity(ctx context.Context, id uuid.UUID, nextRun time.Time) error {

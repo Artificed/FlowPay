@@ -34,7 +34,6 @@ type ScheduledPaymentService interface {
 	Count(ctx context.Context, userID uuid.UUID, status *models.ScheduledPaymentStatus) (int64, error)
 	Cancel(ctx context.Context, id, userID uuid.UUID) error
 	Reactivate(ctx context.Context, id, userID uuid.UUID) (*models.ScheduledPayment, error)
-	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
 type scheduledPaymentService struct {
@@ -132,8 +131,4 @@ func (s *scheduledPaymentService) Reactivate(ctx context.Context, id, userID uui
 	sp.WorkflowID = newWorkflowID
 	sp.NextRunAt = nextRunAt
 	return sp, nil
-}
-
-func (s *scheduledPaymentService) IsActive(ctx context.Context, id uuid.UUID) (bool, error) {
-	return s.spRepo.IsActive(ctx, id)
 }
