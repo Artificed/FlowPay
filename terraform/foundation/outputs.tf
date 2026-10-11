@@ -49,7 +49,7 @@ output "private_subnet_ids" {
 }
 
 output "private_route_table_id" {
-  description = "Private route table, for the app layer to add a NAT route to when use_nat_gateway is set."
+  description = "Route table shared by the private subnets."
   value       = aws_route_table.private.id
 }
 
