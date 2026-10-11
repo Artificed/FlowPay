@@ -1,14 +1,18 @@
 package temporal
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
 
 	"flowpay-be/internal/currency"
+	"flowpay-be/internal/repository"
 	"flowpay-be/internal/service"
 
+	"github.com/google/uuid"
 	temporalerr "go.temporal.io/sdk/temporal"
+	"go.temporal.io/sdk/testsuite"
 )
 
 func TestWrapBusinessError_NilReturnsNil(t *testing.T) {
@@ -67,5 +71,31 @@ func TestWrapBusinessError_InfraError_PassesThrough(t *testing.T) {
 	result := wrapBusinessError(err)
 	if result != err {
 		t.Errorf("expected error to pass through unchanged, got %v", result)
+	}
+}
+
+type recordingScheduledPaymentRepo struct {
+	repository.ScheduledPaymentRepository
+	gotWorkflowID string
+}
+
+func (r *recordingScheduledPaymentRepo) IsActive(_ context.Context, _ uuid.UUID, workflowID string) (bool, error) {
+	r.gotWorkflowID = workflowID
+	return true, nil
+}
+
+func TestCheckScheduledPaymentActiveActivity_AsksForItsOwnWorkflow(t *testing.T) {
+	repo := &recordingScheduledPaymentRepo{}
+	a := NewActivities(nil, repo)
+
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(a)
+
+	if _, err := env.ExecuteActivity(a.CheckScheduledPaymentActiveActivity, uuid.New()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if repo.gotWorkflowID != "default-test-workflow-id" {
+		t.Errorf("checked for workflow %q, want the running workflow's ID", repo.gotWorkflowID)
 	}
 }

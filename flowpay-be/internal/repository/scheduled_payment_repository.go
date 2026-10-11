@@ -19,7 +19,7 @@ type ScheduledPaymentRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.ScheduledPaymentStatus) error
 	UpdateNextRunAt(ctx context.Context, id uuid.UUID, nextRunAt time.Time) error
 	Reactivate(ctx context.Context, id uuid.UUID, workflowID string, nextRunAt time.Time) error
-	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
+	IsActive(ctx context.Context, id uuid.UUID, workflowID string) (bool, error)
 	CancelWithReason(ctx context.Context, id uuid.UUID, reason string) error
 }
 
@@ -94,13 +94,13 @@ func (r *scheduledPaymentRepository) CancelWithReason(ctx context.Context, id uu
 		Updates(map[string]any{"status": models.ScheduledPaymentStatusInactive, "failed_reason": reason}).Error
 }
 
-func (r *scheduledPaymentRepository) IsActive(ctx context.Context, id uuid.UUID) (bool, error) {
+func (r *scheduledPaymentRepository) IsActive(ctx context.Context, id uuid.UUID, workflowID string) (bool, error) {
 	var sp models.ScheduledPayment
-	if err := r.db.WithContext(ctx).Select("status").First(&sp, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Select("status", "workflow_id").First(&sp, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
 		return false, err
 	}
-	return sp.Status == models.ScheduledPaymentStatusActive, nil
+	return sp.Status == models.ScheduledPaymentStatusActive && sp.WorkflowID == workflowID, nil
 }

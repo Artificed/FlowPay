@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 )
 
@@ -63,7 +64,7 @@ func (a *Activities) CancelScheduledPaymentActivity(ctx context.Context, id uuid
 }
 
 func (a *Activities) CheckScheduledPaymentActiveActivity(ctx context.Context, id uuid.UUID) (bool, error) {
-	return a.scheduledPaymentRepo.IsActive(ctx, id)
+	return a.scheduledPaymentRepo.IsActive(ctx, id, activity.GetInfo(ctx).WorkflowExecution.ID)
 }
 
 func (a *Activities) UpdateScheduledPaymentNextRunActivity(ctx context.Context, id uuid.UUID, nextRun time.Time) error {
