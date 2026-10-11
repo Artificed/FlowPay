@@ -69,16 +69,16 @@ services:
     entrypoint: ["/bin/sh"]
     command: /scripts/create-namespace.sh
 
-  minio:
-    image: minio/minio
-    command: server /data
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.48
+    command: server -dir=/data -s3
     environment:
-      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY}
     volumes:
-      - minio_data:/data
+      - seaweedfs_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:8333/healthz"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -114,8 +114,8 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       TEMPORAL_ADDRESS: temporal:7233
-      STORAGE_ENDPOINT: minio:9000
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/flowpay}
+      STORAGE_ENDPOINT: seaweedfs:8333
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:8333/flowpay}
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
       STORAGE_BUCKET: flowpay
@@ -124,7 +124,7 @@ services:
         condition: service_healthy
       temporal-create-namespace:
         condition: service_completed_successfully
-      minio:
+      seaweedfs:
         condition: service_healthy
 
   frontend:
@@ -140,4 +140,4 @@ services:
 volumes:
   postgres_data:
   temporal_postgres_data:
-  minio_data:
+  seaweedfs_data:
