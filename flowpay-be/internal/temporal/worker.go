@@ -33,7 +33,7 @@ func NewClient(ctx context.Context, address string) (client.Client, error) {
 }
 
 func NewWorker(c client.Client, transferSvc service.TransferService, scheduledPaymentRepo repository.ScheduledPaymentRepository) worker.Worker {
-	w := worker.New(c, TaskQueue, worker.Options{})
+	w := worker.New(c, TaskQueue, worker.Options{WorkerStopTimeout: 10 * time.Second})
 
 	activities := NewActivities(transferSvc, scheduledPaymentRepo)
 	w.RegisterWorkflow(TransferWorkflow)
