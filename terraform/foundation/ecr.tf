@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "this" {
-  for_each = toset(["backend", "frontend"])
+  for_each = toset(["backend"])
 
   name                 = "${var.project}-${each.key}"
   image_tag_mutability = "IMMUTABLE"
