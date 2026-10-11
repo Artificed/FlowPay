@@ -98,16 +98,18 @@ A React single-page app built with Vite:
 
 ---
 
-## Technology Stack
+## Technology stack
 
 | Category | Technologies |
 |----------|--------------|
 | **Backend** | Go 1.25, Gin, GORM, Temporal Go SDK |
-| **Frontend** | React 19, TypeScript, Vite, TailwindCSS 4, shadcn/ui |
-| **Database** | PostgreSQL 17 |
-| **Orchestration**| Temporal Server v1.30.1 |
-| **Infrastructure**| Docker, Docker Compose, Nginx |
-| **Storage** | Amazon S3 for user avatars, MinIO locally |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS 4, shadcn/ui |
+| **Database** | PostgreSQL 17 on Amazon RDS |
+| **Orchestration** | Temporal 1.30.1, self-hosted |
+| **Cloud** | AWS: ECS on Fargate, RDS, ALB, CloudFront, S3, Route 53, ACM, Cloud Map, Secrets Manager, ECR, CloudWatch |
+| **Infrastructure as code** | Terraform |
+| **CI/CD** | GitHub Actions with OIDC |
+| **Local development** | Docker Compose, Nginx, MinIO |
 | **Security** | JWT, bcrypt |
 
 ---
